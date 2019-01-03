@@ -64,12 +64,14 @@ namespace ny_cli {
         internal class InvalidResourceTypeException : System.Exception {
             public InvalidResourceTypeException(string mssg) : base (mssg) {}
         }
+        
         private static ResourceType parseResourceType(string type) {
             if (type.ToLower() == "model") return ResourceType.model;
             else if (type.ToLower() == "data") return ResourceType.data;
             else if (type.ToLower() == "code") return ResourceType.code;
             else throw new InvalidResourceTypeException(type);
         }
+        
         static void Main(string[] args) {
             Parser parser = new Parser(settings => {
                 settings.CaseInsensitiveEnumValues = true;

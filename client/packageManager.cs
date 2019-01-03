@@ -6,7 +6,6 @@ using System.IO;
 
 // @TODO make sure all streams are being closed properly?
 namespace PackageManagerNS {
-
     public static class PackageManager {
         public static void initDirectories() {
             FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);

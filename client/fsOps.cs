@@ -9,13 +9,9 @@ namespace FSOpsNS {
         private static string dataDirName = "data";
         private static string modelDirName = "model";
         private static string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
-
-        public static List<string> a() {
-            return new List<string>();
-        }
         
         public static bool hasCodeDataModelDirs() {
-            foreach (string dirNames in FSOps.dirNames) {
+            foreach (string dirNames in dirNames) {
                 if (!Directory.Exists(dirNames)) {
                     return false;
                 }
@@ -27,7 +23,7 @@ namespace FSOpsNS {
         public static bool createCodeDataModelDirs(bool logExisting = false, bool logCreated = false, bool logError = true) {
             bool successful = true;
             
-            foreach (string dirName in FSOps.dirNames) {
+            foreach (string dirName in dirNames) {
                 if (Directory.Exists(dirName)) {
                     if (logExisting) {
                         System.Console.WriteLine($"Directory \"{dirName}\" already exists");

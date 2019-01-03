@@ -10,10 +10,10 @@ namespace NetworkUtilsNS {
         public class NetworkUtilsException : System.Exception {
             public NetworkUtilsException(string mssg) : base(mssg) {}
         }
-        private static readonly string resourcesUrl = "http://localhost:5000/api/";
+        private static readonly string resourcesUrl = "http://localhost:5000/api/resources";
 
         public static Stream getResource(ResourceType resourceType, string resourceName) {
-            string url = $"{resourcesUrl}resources/{resourceType.ToString()}/{resourceName}";
+            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}";
             
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) {
                 try {
@@ -26,7 +26,7 @@ namespace NetworkUtilsNS {
         }
 
         public static List<string> getAvailableResources(ResourceType resourceType) {
-            string url = $"{resourcesUrl}resources/{resourceType.ToString()}";
+            string url = $"{resourcesUrl}/{resourceType.ToString()}";
 
             using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) {
                 try {
