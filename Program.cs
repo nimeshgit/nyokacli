@@ -1,43 +1,63 @@
 ﻿
 using CommandLine;
+using FSOpsNS;
+using System.Collections.Generic;
+using PackageManagerNS;
 
 namespace ny_cli {
-    [Verb("add", HelpText = "Add file contents to the index.")]
+    internal static class ConstStrings {
+        internal const string RESOURCE_TYPE_HINT = "Resource Type: \"code\", \"data\" or \"model\"";
+    }
+    [Verb("init", HelpText = "Initialize code, data and model folders.")]
+    class InitOptions {
+    }
+
+    [Verb("add", HelpText = "Add resource")]
     class AddOptions {
-        //normal options here
+        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public ResourceType resourceType {get;set;}
+
+        [Value(1, Required = true, HelpText = "Resource name")]
+        public string resourceName {get;set;}
     }
-    [Verb("commit", HelpText = "Record changes to the repository.")]
-    class CommitOptions {
-        //commit options here
-    }
-    [Verb("clone", HelpText = "Clone a repository into a new directory.")]
-    class CloneOptions {
-        //clone options here
+
+    [Verb("list", HelpText = "List packages")]
+    class ListOptions {
+        public ResourceType? nullableResourceType = null;
+        
+        [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public ResourceType resourceType {
+            get {
+                return nullableResourceType.Value;
+            }
+            set {
+                nullableResourceType = value;
+            }
+        }
     }
     
     class Program {
-        // internal class NyokaOptions {
-        //     [Option('v', "verbose", Required = false, HelpText = "Set output to verbose messages.")]
-        //     public bool Verbose { get; set; }
-        // }
-        
         static void Main(string[] args) {
-            Parser.Default.ParseArguments<AddOptions, CommitOptions, CloneOptions>(args)
-                .MapResult(
-                    (AddOptions opts) => {
-                        System.Console.WriteLine("Add");
-                        return 1;
-                    },
-                    (CommitOptions opts) => {
-                        System.Console.WriteLine("Commit");
-                        return 1;
-                    },
-                    (CloneOptions opts) => {
-                        System.Console.WriteLine("Clone");
-                        return 1;
-                    },
-                    errs => 1
-                );
+            Parser parser = new Parser(settings => {
+                settings.CaseInsensitiveEnumValues = true;
+                settings.HelpWriter = System.Console.Error;
+            });
+
+            parser.ParseArguments<InitOptions, AddOptions, ListOptions>(args)
+                .WithParsed<InitOptions>(opts => {
+                    bool successful = FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);
+                })
+                .WithParsed<AddOptions>(opts => {
+                    PackageManager.addPackage(
+                        opts.resourceType,
+                        opts.resourceName
+                    );
+                })
+                .WithParsed<ListOptions>(opts => {
+                    PackageManager.listPackages(
+                        opts.nullableResourceType
+                    );
+                });
         }
     }
 }
