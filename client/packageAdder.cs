@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 using Constants;
 using FSOpsNS;
+using NetworkUtilsNS;
 
 namespace PackageManagerNS {
     public enum ResourceType { code, data, model }
 
     public static class PackageManager {
+        public static void initDirectories() {
+            FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);
+        }
+        
         public static void addPackage(ResourceType resourceType, string packageName) {
             FSOps.createCodeDataModelDirs();
 

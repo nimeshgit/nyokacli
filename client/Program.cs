@@ -1,5 +1,4 @@
-﻿
-using CommandLine;
+﻿using CommandLine;
 using FSOpsNS;
 using System.Collections.Generic;
 using PackageManagerNS;
@@ -7,10 +6,8 @@ using CommandLine.Text;
 using Constants;
 
 namespace ny_cli {
-    
     [Verb("init", HelpText = "Initialize code, data and model folders.")]
-    class InitOptions {
-    }
+    class InitOptions {}
 
     [Verb("add", HelpText = "Add resource")]
     class AddOptions {
@@ -69,7 +66,12 @@ namespace ny_cli {
 
             parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions>(args)
                 .WithParsed<InitOptions>(opts => {
-                    bool successful = FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);
+                    PackageManager.initDirectories();
+                })
+                .WithParsed<ListOptions>(opts => {
+                    PackageManager.listPackages(
+                        opts.nullableResourceType
+                    );
                 })
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
@@ -81,11 +83,6 @@ namespace ny_cli {
                     PackageManager.removePackage(
                         opts.resourceType,
                         opts.resourceName
-                    );
-                })
-                .WithParsed<ListOptions>(opts => {
-                    PackageManager.listPackages(
-                        opts.nullableResourceType
                     );
                 });
         }
