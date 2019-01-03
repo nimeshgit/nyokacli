@@ -2,26 +2,43 @@ using System.Net;
 using System.IO;
 using PackageManagerNS;
 using Constants;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace NetworkUtilsNS {
     public static class NetworkUtils {
         public class NetworkUtilsException : System.Exception {
             public NetworkUtilsException(string mssg) : base(mssg) {}
         }
-        private static readonly string resourcesUrl = "http://localhost:5001/resources";
+        private static readonly string resourcesUrl = "http://localhost:5000/api/";
 
         public static Stream getResource(ResourceType resourceType, string resourceName) {
-            string url = $"{resourcesUrl}/resources/{resourceType.ToString()}/{resourceName}";
-            System.Console.WriteLine(url);
+            string url = $"{resourcesUrl}resources/{resourceType.ToString()}/{resourceName}";
             
-            using (System.Net.WebClient client = new System.Net.WebClient()) {
+            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) {
                 try {
-                    Stream stream = client.OpenRead(url);
+                    Stream stream = client.GetStreamAsync(url).Result;
                     return stream;
                 } catch (System.Net.WebException) {
                     throw new NetworkUtilsException("Unable to get requested resource from server");
                 } catch (System.Exception) {
                     throw new NetworkUtilsException("Unknown error retrieving resource");
+                }
+            }
+        }
+
+        public static List<string> getAvailableResources(ResourceType resourceType) {
+            string url = $"{resourcesUrl}resources/{resourceType.ToString()}";
+
+            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient()) {
+                try {
+                    string jsonArr = client.GetStringAsync(url).Result;
+                    List<string> resources = JsonConvert.DeserializeObject<List<string>>(jsonArr);
+                    return resources;
+                } catch (System.Net.WebException) {
+                    throw new NetworkUtilsException("Unable to get requested information from server");
+                } catch (JsonReaderException) {
+                    throw new NetworkUtilsException("Unable to process server response");
                 }
             }
         }

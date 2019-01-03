@@ -22,13 +22,13 @@ namespace PackageManagerNS {
             }
 
             try {
-                using (FileStream fileStream = FSOps.createResourceFile(resourceType, resourceName))
                 using (Stream resourceStream = NetworkUtils.getResource(resourceType, resourceName))
+                using (FileStream fileStream = FSOps.createResourceFile(resourceType, resourceName))
                 {
                     resourceStream.CopyTo(fileStream);
                 }
             } catch (NetworkUtils.NetworkUtilsException e) {
-                System.Console.WriteLine("Error: " + e.Message);
+                System.Console.WriteLine("Network error: " + e.Message);
             }
         }
 
@@ -54,12 +54,28 @@ namespace PackageManagerNS {
                 new List<ResourceType> { listType.Value } :
                 new List<ResourceType> { ResourceType.code, ResourceType.data, ResourceType.model };
 
-
             foreach (ResourceType resourceType in resourcesToList) {
                 System.Console.WriteLine($"{resourceType.ToString()}:");
                 foreach (string resourceName in FSOps.resourceNames(resourceType)) {
                     System.Console.WriteLine("    " + resourceName);
                 }
+            }
+        }
+
+        public static void listAvailableResources(ResourceType? listType) {
+            List<ResourceType> resourcesToList = listType.HasValue ?
+                new List<ResourceType> { listType.Value } :
+                new List<ResourceType> { ResourceType.code, ResourceType.data, ResourceType.model };
+            
+            try {
+                foreach (ResourceType resourceType in resourcesToList) {
+                    System.Console.WriteLine($"{resourceType.ToString()}:");
+                    foreach (string resourceName in NetworkUtils.getAvailableResources(resourceType)) {
+                        System.Console.WriteLine("    " + resourceName);
+                    }
+                }
+            } catch (NetworkUtils.NetworkUtilsException ex) {
+                System.Console.WriteLine("Network error: " + ex.Message);
             }
         }
     }

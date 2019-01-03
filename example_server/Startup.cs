@@ -41,7 +41,8 @@ namespace example_server
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            // @TODO fix this? Https doesn't work without certificate?
+            // app.UseHttpsRedirection();
             app.UseMvc();
         }
     }

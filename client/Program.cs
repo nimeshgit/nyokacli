@@ -103,18 +103,18 @@ namespace ny_cli {
                         opts.resourceType,
                         opts.resourceName
                     );
-                // })
-                // .WithParsed<AvailableOptions>(opts => {
-                //     if (opts.resourceType == null) {
-                //         PackageManager.listAvailableResources(null);
-                //     } else {
-                //         try {
-                //             ResourceType resourceType = parseResourceType(opts.resourceType);
-                //             PackageManager.listAvailableResources(resourceType);
-                //         } catch (InvalidResourceTypeException) {
-                //             System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
-                //         }
-                //     }
+                })
+                .WithParsed<AvailableOptions>(opts => {
+                    if (opts.resourceType == null) {
+                        PackageManager.listAvailableResources(null);
+                    } else {
+                        try {
+                            ResourceType resourceType = parseResourceType(opts.resourceType);
+                            PackageManager.listAvailableResources(resourceType);
+                        } catch (InvalidResourceTypeException) {
+                            System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                        }
+                    }
                 });
         }
     }
