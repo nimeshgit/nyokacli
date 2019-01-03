@@ -11,6 +11,7 @@ namespace PackageManagerNS {
             FSOps.createCodeDataModelDirs();
 
             System.Console.WriteLine($"Adding {resourceType.ToString().ToLower()} resource \"{packageName}\"");
+            System.Console.WriteLine("Unimplemented");
         }
 
         public static void listPackages(ResourceType? resourceType) {

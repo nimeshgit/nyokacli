@@ -50,15 +50,21 @@ namespace FSOpsNS {
         }
 
         public static IEnumerable<string> codeResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.codeDirName).EnumerateFiles().Select(file => file.Name);
+            return new System.IO.DirectoryInfo(FSOps.codeDirName).EnumerateFiles().Select(file => {
+                return file.Name;
+            });
         }
 
         public static IEnumerable<string> dataResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.dataDirName).EnumerateFiles().Select(file => file.Name);
+            return new System.IO.DirectoryInfo(FSOps.dataDirName).EnumerateFiles().Select(file => {
+                return file.Name;
+            });
         }
 
         public static IEnumerable<string> modelResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.modelDirName).EnumerateFiles().Select(file => file.Name);
+            return new System.IO.DirectoryInfo(FSOps.modelDirName).EnumerateFiles().Select(file => {
+                return file.Name;
+            });
         }
     }
 }
