@@ -19,10 +19,8 @@ namespace NetworkUtilsNS {
                 try {
                     Stream stream = client.GetStreamAsync(url).Result;
                     return stream;
-                } catch (System.Net.WebException) {
-                    throw new NetworkUtilsException("Unable to get requested resource from server");
                 } catch (System.Exception) {
-                    throw new NetworkUtilsException("Unknown error retrieving resource");
+                    throw new NetworkUtilsException("Unable to get requested resource from server");
                 }
             }
         }
@@ -35,11 +33,11 @@ namespace NetworkUtilsNS {
                     string jsonArr = client.GetStringAsync(url).Result;
                     List<string> resources = JsonConvert.DeserializeObject<List<string>>(jsonArr);
                     return resources;
-                } catch (System.Net.WebException) {
-                    throw new NetworkUtilsException("Unable to get requested information from server");
                 } catch (JsonReaderException) {
                     throw new NetworkUtilsException("Unable to process server response");
-                }
+                }catch (System.Exception) {
+                    throw new NetworkUtilsException("Unable to get requested information from server");
+                } 
             }
         }
     }

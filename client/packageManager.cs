@@ -27,6 +27,7 @@ namespace PackageManagerNS {
                 {
                     resourceStream.CopyTo(fileStream);
                 }
+                System.Console.WriteLine("Resource added");
             } catch (NetworkUtils.NetworkUtilsException e) {
                 System.Console.WriteLine("Network error: " + e.Message);
             }
@@ -42,6 +43,7 @@ namespace PackageManagerNS {
             }
 
             FSOps.removeResource(resourceType, resourceName);
+            System.Console.WriteLine("Resource removed");
         }
 
         public static void listResources(ResourceType? listType) {
