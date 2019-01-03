@@ -50,6 +50,11 @@ namespace FSOpsNS {
 
             return successful;
         }
+
+        public static void removeResource(ResourceType resourceType, string resourceName) {
+            File.Delete($"{resourceType.ToString()}/{resourceName}");
+        }
+        
         public static bool resourceExists(ResourceType resourceType, string resourceName) {
             return File.Exists($"{resourceType.ToString()}/{resourceName}");
         }

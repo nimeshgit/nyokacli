@@ -12,18 +12,18 @@ namespace PackageManagerNS {
             FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);
         }
         
-        public static void addPackage(ResourceType resourceType, string packageName) {
+        public static void addPackage(ResourceType resourceType, string resourceName) {
             FSOps.createCodeDataModelDirs();
-            System.Console.WriteLine($"Adding {resourceType.ToString().ToLower()} resource \"{packageName}\"");
+            System.Console.WriteLine($"Adding {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
 
-            if (FSOps.resourceExists(resourceType, packageName)) {
-                System.Console.WriteLine($"{resourceType} resource \"{packageName}\" already exists");
+            if (FSOps.resourceExists(resourceType, resourceName)) {
+                System.Console.WriteLine($"{resourceType} resource \"{resourceName}\" already exists");
                 return;
             }
 
             try {
-                using (FileStream fileStream = FSOps.createResourceFile(resourceType, packageName))
-                using (Stream resourceStream = NetworkUtils.getResource(resourceType, packageName))
+                using (FileStream fileStream = FSOps.createResourceFile(resourceType, resourceName))
+                using (Stream resourceStream = NetworkUtils.getResource(resourceType, resourceName))
                 {
                     resourceStream.CopyTo(fileStream);
                 }
@@ -32,14 +32,19 @@ namespace PackageManagerNS {
             }
         }
 
-        public static void removePackage(ResourceType resourceType, string packageName) {
+        public static void removePackage(ResourceType resourceType, string resourceName) {
             FSOps.createCodeDataModelDirs();
 
-            System.Console.WriteLine($"Removing {resourceType.ToString().ToLower()} resource \"{packageName}\"");
-            System.Console.WriteLine("Unimplemented");
+            System.Console.WriteLine($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
+            if (!FSOps.resourceExists(resourceType, resourceName)) {
+                System.Console.WriteLine($"{resourceType} resource \"{resourceName}\" does not exist");
+                return;
+            }
+
+            FSOps.removeResource(resourceType, resourceName);
         }
 
-        public static void listPackages(ResourceType? listType) {
+        public static void listResources(ResourceType? listType) {
             if (!FSOps.hasCodeDataModelDirs()) {
                 System.Console.WriteLine($"Missing resource directories. Try running {ConstStrings.APPLICATION_ALIAS} init?");
                 return;

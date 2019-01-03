@@ -39,39 +39,58 @@ namespace ny_cli {
 
     [Verb("list", HelpText = "List packages")]
     class ListOptions {
-        public ResourceType? nullableResourceType = null;
-        
         [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
-        public ResourceType resourceType {
-            get {
-                return nullableResourceType.Value;
-            }
-            set {
-                nullableResourceType = value;
-            }
-        }
+        public string resourceType {get;set;}
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
         public static IEnumerable<Example> Examples {get { return new List<Example>() {
-            new Example("List model resources", new ListOptions { resourceType = ResourceType.model}),
+            new Example("List all resources", new ListOptions {}),
+            new Example("List all model resources", new ListOptions { resourceType = "model"}),
+        };}}
+    }
+
+    [Verb("available", HelpText = "List available packages")]
+    class AvailableOptions {
+        [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public string resourceType {get;set;}
+
+        public static IEnumerable<Example> Examples {get { return new List<Example>() {
+            new Example("List all available resources", new AvailableOptions {} ),
+            new Example("List all available model resources", new AvailableOptions {resourceType = "model"})
         };}}
     }
 
     class Program {
+        internal class InvalidResourceTypeException : System.Exception {
+            public InvalidResourceTypeException(string mssg) : base (mssg) {}
+        }
+        private static ResourceType parseResourceType(string type) {
+            if (type.ToLower() == "model") return ResourceType.model;
+            else if (type.ToLower() == "data") return ResourceType.data;
+            else if (type.ToLower() == "code") return ResourceType.code;
+            else throw new InvalidResourceTypeException(type);
+        }
         static void Main(string[] args) {
             Parser parser = new Parser(settings => {
                 settings.CaseInsensitiveEnumValues = true;
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     PackageManager.initDirectories();
                 })
                 .WithParsed<ListOptions>(opts => {
-                    PackageManager.listPackages(
-                        opts.nullableResourceType
-                    );
+                    if (opts.resourceType == null) {
+                        PackageManager.listResources(null);
+                    } else {
+                        try {
+                            ResourceType resourceType = parseResourceType(opts.resourceType);
+                            PackageManager.listResources(resourceType);
+                        } catch (InvalidResourceTypeException) {
+                            System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                        }
+                    }
                 })
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
@@ -84,6 +103,18 @@ namespace ny_cli {
                         opts.resourceType,
                         opts.resourceName
                     );
+                // })
+                // .WithParsed<AvailableOptions>(opts => {
+                //     if (opts.resourceType == null) {
+                //         PackageManager.listAvailableResources(null);
+                //     } else {
+                //         try {
+                //             ResourceType resourceType = parseResourceType(opts.resourceType);
+                //             PackageManager.listAvailableResources(resourceType);
+                //         } catch (InvalidResourceTypeException) {
+                //             System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                //         }
+                //     }
                 });
         }
     }

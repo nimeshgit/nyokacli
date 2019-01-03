@@ -8,14 +8,15 @@ namespace NetworkUtilsNS {
         public class NetworkUtilsException : System.Exception {
             public NetworkUtilsException(string mssg) : base(mssg) {}
         }
-        private static readonly string baseUrl = "http://localhost:5050";
+        private static readonly string resourcesUrl = "http://localhost:5001/resources";
 
         public static Stream getResource(ResourceType resourceType, string resourceName) {
-            string url = $"{baseUrl}/getResource/{resourceType}/{resourceName}";
+            string url = $"{resourcesUrl}/resources/{resourceType.ToString()}/{resourceName}";
+            System.Console.WriteLine(url);
             
             using (System.Net.WebClient client = new System.Net.WebClient()) {
                 try {
-                    Stream stream = client.OpenRead("http://yoururl/test.txt");
+                    Stream stream = client.OpenRead(url);
                     return stream;
                 } catch (System.Net.WebException) {
                     throw new NetworkUtilsException("Unable to get requested resource from server");
