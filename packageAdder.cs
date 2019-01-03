@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Constants;
 using FSOpsNS;
-// using System.Linq;
 
 namespace PackageManagerNS {
     public enum ResourceType { code, data, model }
@@ -11,6 +10,13 @@ namespace PackageManagerNS {
             FSOps.createCodeDataModelDirs();
 
             System.Console.WriteLine($"Adding {resourceType.ToString().ToLower()} resource \"{packageName}\"");
+            System.Console.WriteLine("Unimplemented");
+        }
+
+        public static void removePackage(ResourceType resourceType, string packageName) {
+            FSOps.createCodeDataModelDirs();
+
+            System.Console.WriteLine($"Removing {resourceType.ToString().ToLower()} resource \"{packageName}\"");
             System.Console.WriteLine("Unimplemented");
         }
 

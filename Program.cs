@@ -26,6 +26,20 @@ namespace ny_cli {
         };}}
     }
 
+    [Verb("remove", HelpText = "Remove resource")]
+    class RemoveOptions {
+        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public ResourceType resourceType {get;set;}
+
+        [Value(1, Required = true, HelpText = "Resource name")]
+        public string resourceName {get;set;}
+
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples {get {return new List<Example>() {
+            new Example("Add a data resource", new RemoveOptions { resourceType = ResourceType.model, resourceName = "example_model_resource_name" })
+        };}}
+    }
+
     [Verb("list", HelpText = "List packages")]
     class ListOptions {
         public ResourceType? nullableResourceType = null;
@@ -53,12 +67,18 @@ namespace ny_cli {
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, ListOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     bool successful = FSOps.createCodeDataModelDirs(logExisting: true, logCreated: true, logError: true);
                 })
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
+                        opts.resourceType,
+                        opts.resourceName
+                    );
+                })
+                .WithParsed<RemoveOptions>(opts => {
+                    PackageManager.removePackage(
                         opts.resourceType,
                         opts.resourceName
                     );
