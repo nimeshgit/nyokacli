@@ -56,7 +56,7 @@ namespace ny_cli {
             new Example("List model resources", new ListOptions { resourceType = ResourceType.model}),
         };}}
     }
-    
+
     class Program {
         static void Main(string[] args) {
             Parser parser = new Parser(settings => {

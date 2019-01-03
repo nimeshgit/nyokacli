@@ -1,15 +1,28 @@
-using System.Net.Http;
+using System.Net;
+using System.IO;
+using PackageManagerNS;
+using Constants;
 
 namespace NetworkUtilsNS {
     public static class NetworkUtils {
-        private static HttpClient _client = null;
-        private static HttpClient client {
-            get {
-                if (_client == null) return (_client = new HttpClient());
-                else return _client;
+        public class NetworkUtilsException : System.Exception {
+            public NetworkUtilsException(string mssg) : base(mssg) {}
+        }
+        private static readonly string baseUrl = "http://localhost:5050";
+
+        public static Stream getResource(ResourceType resourceType, string resourceName) {
+            string url = $"{baseUrl}/getResource/{resourceType}/{resourceName}";
+            
+            using (System.Net.WebClient client = new System.Net.WebClient()) {
+                try {
+                    Stream stream = client.OpenRead("http://yoururl/test.txt");
+                    return stream;
+                } catch (System.Net.WebException) {
+                    throw new NetworkUtilsException("Unable to get requested resource from server");
+                } catch (System.Exception) {
+                    throw new NetworkUtilsException("Unknown error retrieving resource");
+                }
             }
         }
-
-        private static readonly string baseUrl = "0.0.0.0:5000";
     }
 }

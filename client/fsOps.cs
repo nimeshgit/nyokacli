@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using Constants;
 
 namespace FSOpsNS {
     public static class FSOps {
@@ -14,7 +16,7 @@ namespace FSOpsNS {
         
         public static bool hasCodeDataModelDirs() {
             foreach (string dirNames in FSOps.dirNames) {
-                if (!System.IO.Directory.Exists(dirNames)) {
+                if (!Directory.Exists(dirNames)) {
                     return false;
                 }
             }
@@ -26,18 +28,18 @@ namespace FSOpsNS {
             bool successful = true;
             
             foreach (string dirName in FSOps.dirNames) {
-                if (System.IO.Directory.Exists(dirName)) {
+                if (Directory.Exists(dirName)) {
                     if (logExisting) {
                         System.Console.WriteLine($"Directory \"{dirName}\" already exists");
                     }
                 } else {
                     try {
-                        System.IO.Directory.CreateDirectory(dirName);
+                        Directory.CreateDirectory(dirName);
                         
                         if (logCreated) {
                             System.Console.WriteLine($"Directory \"{dirName}\" created");
                         }
-                    } catch (System.IO.IOException) {
+                    } catch (IOException) {
                         if (logError) {
                             System.Console.WriteLine($"Failed to create directory \"{dirName}\"");
                         }
@@ -48,23 +50,16 @@ namespace FSOpsNS {
 
             return successful;
         }
-
-        public static IEnumerable<string> codeResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.codeDirName).EnumerateFiles().Select(file => {
-                return file.Name;
-            });
+        public static bool resourceExists(ResourceType resourceType, string resourceName) {
+            return File.Exists($"{resourceType.ToString()}/{resourceName}");
         }
 
-        public static IEnumerable<string> dataResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.dataDirName).EnumerateFiles().Select(file => {
-                return file.Name;
-            });
+        public static IEnumerable<string> resourceNames(ResourceType resourceType) {
+            return new DirectoryInfo(resourceType.ToString()).EnumerateFiles().Select(file => file.Name);
         }
 
-        public static IEnumerable<string> modelResourceNames() {
-            return new System.IO.DirectoryInfo(FSOps.modelDirName).EnumerateFiles().Select(file => {
-                return file.Name;
-            });
+        public static FileStream createResourceFile(ResourceType resourceType, string resourceName) {
+            return File.Create($"{resourceType.ToString()}/{resourceName}");
         }
     }
 }
