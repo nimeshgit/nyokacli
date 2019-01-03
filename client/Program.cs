@@ -5,12 +5,16 @@ using PackageManagerNS;
 using CommandLine.Text;
 using Constants;
 
-namespace ny_cli {
+namespace ny_cli
+{
     [Verb("init", HelpText = "Initialize code, data and model folders.")]
-    class InitOptions {}
+    class InitOptions 
+    {
+    }
 
     [Verb("add", HelpText = "Add resource")]
-    class AddOptions {
+    class AddOptions
+    {
         [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
         public ResourceType resourceType {get;set;}
 
@@ -18,13 +22,28 @@ namespace ny_cli {
         public string resourceName {get;set;}
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples {get {return new List<Example>() {
-            new Example("Add a data resource", new AddOptions { resourceType = ResourceType.data, resourceName = "example_data_resource_name" })
-        };}}
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example(
+                        "Add a data resource",
+                        new AddOptions
+                        {
+                            resourceType = ResourceType.data,
+                            resourceName = "example_data_resource_name"
+                        }
+                    )
+                };
+            }
+        }
     }
 
     [Verb("remove", HelpText = "Remove resource")]
-    class RemoveOptions {
+    class RemoveOptions
+    {
         [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
         public ResourceType resourceType {get;set;}
 
@@ -32,47 +51,101 @@ namespace ny_cli {
         public string resourceName {get;set;}
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples {get {return new List<Example>() {
-            new Example("Add a data resource", new RemoveOptions { resourceType = ResourceType.model, resourceName = "example_model_resource_name" })
-        };}}
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example(
+                        "Add a data resource",
+                        new RemoveOptions
+                        {
+                            resourceType = ResourceType.model,
+                            resourceName = "example_model_resource_name"
+                        }
+                    )
+                };
+            }
+        }
     }
 
     [Verb("list", HelpText = "List packages")]
-    class ListOptions {
+    class ListOptions
+    {
         [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
         public string resourceType {get;set;}
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples {get { return new List<Example>() {
-            new Example("List all resources", new ListOptions {}),
-            new Example("List all model resources", new ListOptions { resourceType = "model"}),
-        };}}
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example(
+                        "List all resources",
+                        new ListOptions {}
+                    ),
+                    new Example(
+                        "List all model resources",
+                        new ListOptions
+                        {
+                            resourceType = "model"
+                        }
+                    )
+                };
+            }
+        }
     }
 
     [Verb("available", HelpText = "List available packages")]
-    class AvailableOptions {
+    class AvailableOptions
+    {
         [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
         public string resourceType {get;set;}
 
-        public static IEnumerable<Example> Examples {get { return new List<Example>() {
-            new Example("List all available resources", new AvailableOptions {} ),
-            new Example("List all available model resources", new AvailableOptions {resourceType = "model"})
-        };}}
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example(
+                        "List all available resources",
+                        new AvailableOptions {}
+                    ),
+                    new Example(
+                        "List all available model resources",
+                        new AvailableOptions {
+                            resourceType = "model"
+                        }
+                    )
+                };
+            }
+        }
     }
 
-    class Program {
-        internal class InvalidResourceTypeException : System.Exception {
-            public InvalidResourceTypeException(string mssg) : base (mssg) {}
+    class Program
+    {
+        internal class InvalidResourceTypeException : System.Exception
+        {
+            public InvalidResourceTypeException(string mssg)
+            : base (mssg)
+            {
+            }
         }
         
-        private static ResourceType parseResourceType(string type) {
+        private static ResourceType parseResourceType(string type)
+        {
             if (type.ToLower() == "model") return ResourceType.model;
             else if (type.ToLower() == "data") return ResourceType.data;
             else if (type.ToLower() == "code") return ResourceType.code;
             else throw new InvalidResourceTypeException(type);
         }
         
-        static void Main(string[] args) {
+        static void Main(string[] args)
+        {
             Parser parser = new Parser(settings => {
                 settings.CaseInsensitiveEnumValues = true;
                 settings.HelpWriter = System.Console.Error;
