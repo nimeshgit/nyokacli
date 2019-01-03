@@ -1,36 +1,40 @@
 using System.Collections.Generic;
+using Constants;
+using FSOpsNS;
+// using System.Linq;
 
 namespace PackageManagerNS {
-    public enum ResourceType { Code, Data, Model }
+    public enum ResourceType { code, data, model }
+
     public static class PackageManager {
         public static void addPackage(ResourceType resourceType, string packageName) {
-            FSOpsNS.FSOps.createCodeDataModelDirs();
-            System.Console.WriteLine(resourceType);
-            System.Console.WriteLine(packageName);
+            FSOps.createCodeDataModelDirs();
+
+            System.Console.WriteLine($"Adding {resourceType.ToString().ToLower()} resource \"{packageName}\"");
         }
 
         public static void listPackages(ResourceType? resourceType) {
-            if (!resourceType.HasValue) {
-                listCodePackages();
-                listDataPackages();
-                listModelPackages();
-            } else if (resourceType.Value == ResourceType.Code) {
-                listCodePackages();
-            } else if (resourceType.Value == ResourceType.Data) {
-                listDataPackages();
-            } else if (resourceType.Value == ResourceType.Model) {
-                listModelPackages();
+            if (!FSOps.hasCodeDataModelDirs()) {
+                System.Console.WriteLine($"Missing resource directories. Try running {ConstStrings.APPLICATION_ALIAS} init?");
+                return;
             }
-        }
 
-        private static void listCodePackages() {
-            System.Console.WriteLine("Code packages:");            
-        }
-        private static void listDataPackages() {
-            System.Console.WriteLine("Data packages:");            
-        }
-        private static void listModelPackages() {
-            System.Console.WriteLine("Model packages:");            
+            List<ResourceType> resourcesToList = resourceType.HasValue ?
+                new List<ResourceType> { resourceType.Value } :
+                new List<ResourceType> { ResourceType.code, ResourceType.data, ResourceType.model };
+
+            var resourceGetLists = new Dictionary<ResourceType, System.Func<IEnumerable<string>>>() {
+                {ResourceType.code, () => FSOps.codeResourceNames()},
+                {ResourceType.data, () => FSOps.dataResourceNames()},
+                {ResourceType.model, () => FSOps.modelResourceNames()}
+            };
+
+            foreach (ResourceType resourceT in resourcesToList) {
+                System.Console.WriteLine($"{resourceT.ToString()}:");
+                foreach (string resourceName in resourceGetLists[resourceT]()) {
+                    System.Console.WriteLine("    " + resourceName);
+                }
+            }
         }
     }
 }

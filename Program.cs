@@ -3,11 +3,11 @@ using CommandLine;
 using FSOpsNS;
 using System.Collections.Generic;
 using PackageManagerNS;
+using CommandLine.Text;
+using Constants;
 
 namespace ny_cli {
-    internal static class ConstStrings {
-        internal const string RESOURCE_TYPE_HINT = "Resource Type: \"code\", \"data\" or \"model\"";
-    }
+    
     [Verb("init", HelpText = "Initialize code, data and model folders.")]
     class InitOptions {
     }
@@ -19,6 +19,11 @@ namespace ny_cli {
 
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
+
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples {get {return new List<Example>() {
+            new Example("Add a data resource", new AddOptions { resourceType = ResourceType.data, resourceName = "example_data_resource_name" })
+        };}}
     }
 
     [Verb("list", HelpText = "List packages")]
@@ -34,6 +39,11 @@ namespace ny_cli {
                 nullableResourceType = value;
             }
         }
+
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples {get { return new List<Example>() {
+            new Example("List model resources", new ListOptions { resourceType = ResourceType.model}),
+        };}}
     }
     
     class Program {
