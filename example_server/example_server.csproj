@@ -8,7 +8,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
-    <ProjectReference Include="../../RaiUtils20181021/ZmodFiles/ZmodFiles.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <ProjectReference Include="../../RaiUtils20181021/OsLibCore/OsLibCore.csproj" />
+    <ProjectReference Include="../InfoTransferContainers/InfoTransferContainers.csproj" />
   </ItemGroup>
 
 </Project>

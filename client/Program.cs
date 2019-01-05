@@ -126,6 +126,43 @@ namespace ny_cli
         }
     }
 
+    [Verb("dependencies", HelpText = "List dependencies of resource")]
+    class DependenciesOptions
+    {
+        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public string resourceType {get;set;}
+
+        [Value(1, Required = true, HelpText = "Resource name")]
+        public string resourceName {get;set;}
+
+        [Value(2, Required = true, HelpText = "Resource version")]
+        public string version {get;set;}
+
+        public static IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example(
+                        "List the dependencies of a locally downloaded code resource",
+                        new DependenciesOptions {
+                            resourceType  = "code",
+                            resourceName = "some_local_resource_name.py"
+                        }
+                    ),
+                    new Example(
+                        "List the dependencies of a model resource on the server",
+                        new DependenciesOptions {
+                            resourceType = "model",
+                            resourceName = "name_of_server_model.pmml"
+                        }
+                    )
+                };
+            }
+        }
+    }
+
     class Program
     {
         internal class InvalidResourceTypeException : System.Exception
@@ -151,18 +188,24 @@ namespace ny_cli
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     PackageManager.initDirectories();
                 })
                 .WithParsed<ListOptions>(opts => {
-                    if (opts.resourceType == null) {
+                    if (opts.resourceType == null)
+                    {
                         PackageManager.listResources(null);
-                    } else {
-                        try {
+                    }
+                    else
+                    {
+                        try
+                        {
                             ResourceType resourceType = parseResourceType(opts.resourceType);
                             PackageManager.listResources(resourceType);
-                        } catch (InvalidResourceTypeException) {
+                        }
+                        catch (InvalidResourceTypeException)
+                        {
                             System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
                         }
                     }
@@ -180,15 +223,35 @@ namespace ny_cli
                     );
                 })
                 .WithParsed<AvailableOptions>(opts => {
-                    if (opts.resourceType == null) {
+                    if (opts.resourceType == null)
+                    {
                         PackageManager.listAvailableResources(null);
-                    } else {
-                        try {
+                    }
+                    else
+                    {
+                        try
+                        {
                             ResourceType resourceType = parseResourceType(opts.resourceType);
                             PackageManager.listAvailableResources(resourceType);
-                        } catch (InvalidResourceTypeException) {
+                        }
+                        catch (InvalidResourceTypeException)
+                        {
                             System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
                         }
+                    }
+                })
+                .WithParsed<DependenciesOptions>(opts => {
+                    try {
+                        ResourceType resourceType = parseResourceType(opts.resourceType);
+                        PackageManager.listDependencies(
+                            resourceType,
+                            opts.resourceName,
+                            opts.version
+                        );
+                    }
+                    catch (InvalidResourceTypeException)
+                    {
+                        System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
                     }
                 });
         }

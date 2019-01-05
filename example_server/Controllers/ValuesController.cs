@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using ZmodFiles;
+// using ZmodFiles;
 using System.IO;
+using InfoTransferContainers;
+using ServerResourceDirNS;
 
 namespace example_server.Controllers
 {
@@ -23,110 +25,88 @@ namespace example_server.Controllers
             
             return concatenated;
         }
-        private ZmodDirectory zmodDir = new ZmodDirectory("~/DropboxZMOD/ZMOD/");
+        
+        private static Dictionary<K, V> mergeDictsUnsafe<K, V>(params Dictionary<K, V>[] dicts) {
+            Dictionary<K, V> mergedDict = new Dictionary<K, V>();
+
+            foreach (Dictionary<K, V> dict in dicts) {
+                foreach (KeyValuePair<K, V> entry in dict) {
+                    mergedDict[entry.Key] = entry.Value;
+                }
+            }
+
+            return mergedDict;
+        }
+
+        private ServerResourceDir serverDir = new ServerResourceDir("~/DropboxZMOD/ZMOD/");
         
         [HttpGet("code")]
-        public ActionResult<IEnumerable<string>> CodeGet()
+        public ActionResult<Dictionary<string, FileInfoTransferContainer>> CodeGet()
         {
-            return concatEnumerables<string>(
-                new List<IEnumerable<string>>()
-                {
-                    zmodDir.PyFiles.Keys,
-                    zmodDir.IpynbFiles.Keys,
-                }
-            );
+            return serverDir.getCodeServerInfoDict();
         }
 
         [HttpGet("data")]
-        public ActionResult<IEnumerable<string>> DataGet()
+        public ActionResult<Dictionary<string, FileInfoTransferContainer>> DataGet()
         {
-            return concatEnumerables<string>(
-                new List<IEnumerable<string>>()
-                {
-                    zmodDir.CsvFiles.Keys,
-                    zmodDir.JsonFiles.Keys,
-                    zmodDir.ImageFiles.Keys
-                }
-            );
+            return serverDir.getDataServerInfoDict();
         }
 
         [HttpGet("model")]
-        public ActionResult<IEnumerable<string>> ModelGet()
+        public ActionResult<Dictionary<string, FileInfoTransferContainer>> ModelGet()
         {
-            return zmodDir.PmmlFiles.Keys;
+            return serverDir.getModelServerInfoDict();
         }
 
         [HttpGet("code/{resourceName}")]
         public FileResult GetCodeResource(string resourceName)
         {
-            if (zmodDir.PyFiles.ContainsKey(resourceName))
+            if (!serverDir.getCodeServerInfoDict().Keys.Contains(resourceName))
             {
-                FileStream fileStream = zmodDir.PyFiles[resourceName].info.OpenRead();
-                return new FileStreamResult(fileStream, "application/x-python-code");
-            }
-            else if (zmodDir.IpynbFiles.ContainsKey(resourceName))
-            {
-                FileStream fileStream = zmodDir.IpynbFiles[resourceName].info.OpenRead();
-                return new FileStreamResult(fileStream, "application/x-ipynb+json");
-            }
-            else
-            {
-                // @TODO does throwing an exception expose inside of server too much?
                 throw new FileNotFoundException();
             }
+
+            return serverDir.getCodeStream(resourceName);
         }
 
         [HttpGet("data/{resourceName}")]
         public FileResult GetDataResource(string resourceName)
         {
-            if (zmodDir.CsvFiles.ContainsKey(resourceName))
-            {
-                FileStream fileStream = zmodDir.CsvFiles[resourceName].info.OpenRead();
-                return new FileStreamResult(fileStream, "text/csv");
-            }
-            else if (zmodDir.JsonFiles.ContainsKey(resourceName))
-            {
-                FileStream fileStream = zmodDir.JsonFiles[resourceName].info.OpenRead();
-                return new FileStreamResult(fileStream, "application/json");
-            }
-            else if (zmodDir.ImageFiles.ContainsKey(resourceName))
-            {
-                FileInfo info = zmodDir.ImageFiles[resourceName].info;
-                FileStream fileStream = info.OpenRead();
-                
-                if (info.Extension == ".png")
-                {
-                    return new FileStreamResult(fileStream, "image/png");
-                }
-                else if (info.Extension == ".jpg")
-                {
-                    return new FileStreamResult(fileStream, "image/jpeg");
-                }
-                else
-                {
-                    throw new FileNotFoundException();
-                }
-            }
-            else
+            if (!serverDir.getDataServerInfoDict().Keys.Contains(resourceName))
             {
                 throw new FileNotFoundException();
             }
+
+            return serverDir.getDataStream(resourceName);
         }
 
         [HttpGet("model/{resourceName}")]
         public FileResult GetModelResource(string resourceName)
         {
-            if (zmodDir.PmmlFiles.ContainsKey(resourceName))
-            {
-                FileStream fileStream = zmodDir.PmmlFiles[resourceName].info.OpenRead();
-
-                // @QUESTION should this be text/xml?
-                return new FileStreamResult(fileStream, "application/xml");
-            }
-            else
+            if (!serverDir.getModelServerInfoDict().Keys.Contains(resourceName))
             {
                 throw new FileNotFoundException();
             }
+
+            return serverDir.getModelStream(resourceName);
+        }
+
+        [HttpGet("code/{resourceName}/{version}/dependencies")]
+        public ActionResult<DepsTransferContainer> GetcodeDependencies(string resourceName, string version)
+        {
+            return serverDir.getCodeResourceDeps(resourceName, version);
+        }
+        
+        [HttpGet("data/{resourceName}/{version}/dependencies")]
+        public ActionResult<DepsTransferContainer> GetdataDependencies(string resourceName, string version)
+        {
+            return serverDir.getDataResourceDeps(resourceName, version);
+        }
+        
+        [HttpGet("model/{resourceName}/{version}/dependencies")]
+        public ActionResult<DepsTransferContainer> GetmodelDependencies(string resourceName, string version)
+        {
+            return serverDir.getModelResourceDeps(resourceName, version);
         }
     }
 }

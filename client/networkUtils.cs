@@ -4,6 +4,7 @@ using PackageManagerNS;
 using Constants;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using InfoTransferContainers;
 
 namespace NetworkUtilsNS
 {
@@ -36,7 +37,30 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static List<string> getAvailableResources(ResourceType resourceType)
+        public static DepsTransferContainer getResourceDeps(ResourceType resourceType, string resourceName, string version)
+        {
+            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/{version}/dependencies";
+
+            using (System.Net.Http.HttpClient client = new System.Net.Http.HttpClient())
+            {
+                try
+                {
+                    string resourceJson = client.GetStringAsync(url).Result;
+                    DepsTransferContainer dependencies = JsonConvert.DeserializeObject<DepsTransferContainer>(resourceJson);
+                    return dependencies;
+                }
+                catch (JsonReaderException)
+                {
+                    throw new NetworkUtilsException("Unable to process server response");
+                }
+                catch (System.Exception)
+                {
+                    throw new NetworkUtilsException("Unable to get requested information from server");
+                }
+            }
+        }
+
+        public static Dictionary<string, FileInfoTransferContainer> getAvailableResources(ResourceType resourceType)
         {
             string url = $"{resourcesUrl}/{resourceType.ToString()}";
 
@@ -45,7 +69,7 @@ namespace NetworkUtilsNS
                 try
                 {
                     string jsonArr = client.GetStringAsync(url).Result;
-                    List<string> resources = JsonConvert.DeserializeObject<List<string>>(jsonArr);
+                    Dictionary<string, FileInfoTransferContainer> resources = JsonConvert.DeserializeObject<Dictionary<string, FileInfoTransferContainer>>(jsonArr);
                     return resources;
                 }
                 catch (JsonReaderException)

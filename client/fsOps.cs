@@ -2,17 +2,20 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Constants;
+using NyokaInfoContainerNS;
+using Newtonsoft.Json;
 
 namespace FSOpsNS
 {
     public static class FSOps
     {
-        private static string codeDirName = "code";
-        private static string dataDirName = "data";
-        private static string modelDirName = "model";
-        private static string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
+        private static readonly string codeDirName = "code";
+        private static readonly string dataDirName = "data";
+        private static readonly string modelDirName = "model";
+        private static readonly string nyokaFileName = ".nyoka";
+        private static readonly string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
         
-        public static bool hasCodeDataModelDirs()
+        public static bool hasNecessaryDirsAndFiles()
         {
             foreach (string dirNames in dirNames)
             {
@@ -20,6 +23,11 @@ namespace FSOpsNS
                 {
                     return false;
                 }
+            }
+
+            if (!File.Exists(nyokaFileName))
+            {
+                return false;
             }
 
             return true;
@@ -60,6 +68,38 @@ namespace FSOpsNS
                         }
                         successful = false;
                     }
+                }
+            }
+
+            if (File.Exists(nyokaFileName))
+            {
+                if (logExisting)
+                {
+                    System.Console.WriteLine($"File \"{nyokaFileName}\" already exists");
+                }
+            }
+            else
+            {
+                try
+                {
+                    using (StreamWriter writer = File.CreateText(nyokaFileName))
+                    {
+                        NyokaInfoContainer emptyContainer = new NyokaInfoContainer();
+                        writer.Write(JsonConvert.SerializeObject(emptyContainer));
+                    }
+                    
+                    if (logCreated)
+                    {
+                        System.Console.WriteLine($"File \"{nyokaFileName}\" created");
+                    }
+                }
+                catch (IOException)
+                {
+                    if (logError)
+                    {
+                        System.Console.WriteLine($"Failed to create file \"{nyokaFileName}\"");
+                    }
+                    successful = false;
                 }
             }
 
