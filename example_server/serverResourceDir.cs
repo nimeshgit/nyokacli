@@ -131,9 +131,6 @@ namespace ServerResourceDirNS
         
         public ServerResourceDir(string pathArg)
         {
-            System.Console.WriteLine("===============================================");
-            System.Console.WriteLine(pathArg);
-            System.Console.WriteLine("===============================================");
             root = pathArg;
         }
 
