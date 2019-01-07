@@ -26,11 +26,14 @@ namespace example_server.Controllers
             return concatenated;
         }
         
-        private static Dictionary<K, V> mergeDictsUnsafe<K, V>(params Dictionary<K, V>[] dicts) {
+        private static Dictionary<K, V> mergeDictsUnsafe<K, V>(params Dictionary<K, V>[] dicts)
+        {
             Dictionary<K, V> mergedDict = new Dictionary<K, V>();
 
-            foreach (Dictionary<K, V> dict in dicts) {
-                foreach (KeyValuePair<K, V> entry in dict) {
+            foreach (Dictionary<K, V> dict in dicts)
+            {
+                foreach (KeyValuePair<K, V> entry in dict)
+                {
                     mergedDict[entry.Key] = entry.Value;
                 }
             }
@@ -38,7 +41,12 @@ namespace example_server.Controllers
             return mergedDict;
         }
 
-        private ServerResourceDir serverDir = new ServerResourceDir("~/DropboxZMOD/ZMOD/");
+        private ServerResourceDir serverDir = new ServerResourceDir(
+            Path.Join(
+                System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
+                "ZMODServerFiles"
+            )
+        );
         
         [HttpGet("code")]
         public ActionResult<Dictionary<string, FileInfoTransferContainer>> CodeGet()

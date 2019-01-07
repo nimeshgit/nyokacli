@@ -1,4 +1,3 @@
-using JgenCy.OperatingSystemCore;
 using InfoTransferContainers;
 using System.Collections.Generic;
 using System.IO;
@@ -48,9 +47,9 @@ namespace ServerResourceDirNS
         }
 
         private string root;
-        private string codeDirPath => $"{root}Code/";
-        private string dataDirPath => $"{root}Data/";
-        private string modelDirPath => $"{root}Model/";
+        private string codeDirPath => $"{root}/Code";
+        private string dataDirPath => $"{root}/Data";
+        private string modelDirPath => $"{root}/Model";
 
         private Dictionary<string, FileInfoTransferContainer> getDirServerInfoDict(string parentDirPath) {
             Dictionary<string, FileInfoTransferContainer> infoDict = new Dictionary<string, FileInfoTransferContainer>();
@@ -99,6 +98,16 @@ namespace ServerResourceDirNS
             public Dictionary<string, DepsFileEntry> code;
             public Dictionary<string, DepsFileEntry> data;
             public Dictionary<string, DepsFileEntry> model;
+
+            public DepsFileJson(
+                Dictionary<string, DepsFileEntry> code,
+                Dictionary<string, DepsFileEntry> data,
+                Dictionary<string, DepsFileEntry> model
+            ) {
+                this.code = code;
+                this.data = data;
+                this.model = model;
+            }
         }
 
         private DepsTransferContainer getDirResourceDeps(string codeDirPath, string version, string resourceName)
@@ -122,7 +131,10 @@ namespace ServerResourceDirNS
         
         public ServerResourceDir(string pathArg)
         {
-            root = new RaiFile(pathArg).Path;
+            System.Console.WriteLine("===============================================");
+            System.Console.WriteLine(pathArg);
+            System.Console.WriteLine("===============================================");
+            root = pathArg;
         }
 
         public FileStreamResult getCodeStream(string fileName) => getDirFileStreamResult(codeDirPath, fileName);
