@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Constants;
-using NyokaInfoContainerNS;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using LoggerNS;
+using CLIInterfaceNS;
 
 namespace FSOpsNS
 {
@@ -74,7 +73,7 @@ namespace FSOpsNS
             {
                 if (logExisting)
                 {
-                    Logger.log($"Directory \"{dirName}\" already exists");
+                    CLIInterface.log($"Directory \"{dirName}\" already exists");
                 }
                 return true;
             } 
@@ -86,7 +85,7 @@ namespace FSOpsNS
                     
                     if (logCreated)
                     {
-                        Logger.log($"Directory \"{dirName}\" created");
+                        CLIInterface.log($"Directory \"{dirName}\" created");
                     }
                     return true;
                 }
@@ -94,29 +93,22 @@ namespace FSOpsNS
                 {
                     if (logError)
                     {
-                        Logger.log($"Failed to create directory \"{dirName}\"");
+                        CLIInterface.log($"Failed to create directory \"{dirName}\"");
                     }
                     return false;
                 }
             }
         }
 
-        private static void createDirectoryNyokaFiles(
-            string dirName,
-            bool logExisting,
-            bool logCreated,
-            bool logError)
-        {
-        }
-
         public static void removeResource(ResourceType resourceType, string resourceName)
         {
-            File.Delete($"{resourceType.ToString()}/{resourceName}");
+            File.Delete(Path.Join(resourceType.ToString(), resourceName));
+            File.Delete(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
         }
         
         public static bool resourceExists(ResourceType resourceType, string resourceName)
         {
-            return File.Exists($"{resourceType.ToString()}/{resourceName}");
+            return File.Exists(Path.Join(resourceType.ToString(), resourceName));
         }
 
         public static IEnumerable<string> resourceNames(ResourceType resourceType)

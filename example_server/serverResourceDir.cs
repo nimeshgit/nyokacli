@@ -38,11 +38,11 @@ namespace ServerResourceDirNS
 
             for (int pos = 0;; pos++) {
                 if (pos == v1Sections.Count && pos == v2Sections.Count) return 0;
-                if (pos == v1Sections.Count) return 1;
-                if (pos == v2Sections.Count) return -1;
+                if (pos == v1Sections.Count) return -1;
+                if (pos == v2Sections.Count) return 1;
 
-                if (v1Sections[pos] > v2Sections[pos]) return 1;
-                if (v1Sections[pos] < v2Sections[pos]) return -1;
+                if (v1Sections[pos] > v2Sections[pos]) return -1;
+                if (v1Sections[pos] < v2Sections[pos]) return 1;
             }
         }
 
@@ -63,8 +63,9 @@ namespace ServerResourceDirNS
                     .Select(path => new DirectoryInfo(path).Name).ToList();
 
                 versions.Sort(compareVersions);
-                
-                string latestVersion = versions[versions.Count - 1];
+
+                // first item in sorted list is latest version
+                string latestVersion = versions[0];
                 
                 string resourceFilePath = Path.Combine(
                     parentDirPath,
@@ -82,8 +83,8 @@ namespace ServerResourceDirNS
             return infoDict;
         }
 
-        private FileStreamResult getDirFileStreamResult(string codeDirPath, string resourceName, string version) {
-            string filePath = Path.Combine(codeDirPath, resourceName, version, resourceName);
+        private FileStreamResult getDirFileStreamResult(string parentDirPath, string resourceName, string version) {
+            string filePath = Path.Combine(parentDirPath, resourceName, version, resourceName);
             System.Console.WriteLine(filePath);
             return new FileStreamResult(
                 File.OpenRead(filePath),
@@ -111,10 +112,10 @@ namespace ServerResourceDirNS
             }
         }
 
-        private ResourceInfoContainer getDirResourceDeps(string codeDirPath, string version, string resourceName)
+        private ResourceDependencyInfoContainer getDirResourceDeps(string parentDirPath, string version, string resourceName)
         {
             string depsFilePath = Path.Combine(
-                codeDirPath,
+                parentDirPath,
                 resourceName,
                 version,
                 resourceName + ".deps"
@@ -123,10 +124,23 @@ namespace ServerResourceDirNS
             string depsJson = File.ReadAllText(depsFilePath);
             DepsFileJson fileJson = JsonConvert.DeserializeObject<DepsFileJson>(depsJson);
 
-            return new ResourceInfoContainer(
-                fileJson.code.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version)),
-                fileJson.data.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version)),
-                fileJson.model.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version))
+            return new ResourceDependencyInfoContainer(
+                fileJson.code.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version)),
+                fileJson.data.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version)),
+                fileJson.model.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version))
+            );
+        }
+
+        private ResourceVersionsInfoContainer GetResourceVersions(string parentDirPath, string resourceName)
+        {
+            List<string> versions = Directory.GetDirectories(Path.Combine(parentDirPath, resourceName))
+                .Select(path => new DirectoryInfo(path).Name).ToList();
+
+            versions.Sort(compareVersions);
+            
+            return new ResourceVersionsInfoContainer(
+                versions,
+                versions[0] // first item in sorted list is the newest version
             );
         }
         
@@ -134,6 +148,10 @@ namespace ServerResourceDirNS
         {
             root = pathArg;
         }
+
+        public ResourceVersionsInfoContainer getCodeVersions(string resourceName) => getResourceVersions(codeDirPath, resourceName);
+        public ResourceVersionsInfoContainer getDataVersions(string resourceName) => getResourceVersions(dataDirPath, resourceName);
+        public ResourceVersionsInfoContainer getModelVersions(string resourceName) => getResourceVersions(modelDirPath, resourceName);
 
         public FileStreamResult getCodeStream(string fileName, string version) => getDirFileStreamResult(codeDirPath, fileName, version);
         public FileStreamResult getDataStream(string fileName, string version) => getDirFileStreamResult(dataDirPath, fileName, version);
@@ -143,8 +161,8 @@ namespace ServerResourceDirNS
         public Dictionary<string, FileInfoTransferContainer> getDataServerInfoDict() => getDirServerInfoDict(dataDirPath);
         public Dictionary<string, FileInfoTransferContainer> getModelServerInfoDict() => getDirServerInfoDict(modelDirPath);
 
-        public ResourceInfoContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
-        public ResourceInfoContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);
-        public ResourceInfoContainer getModelResourceDeps(string resourceName, string version) => getDirResourceDeps(modelDirPath, version, resourceName);
+        public ResourceDependencyInfoContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
+        public ResourceDependencyInfoContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);
+        public ResourceDependencyInfoContainer getModelResourceDeps(string resourceName, string version) => getDirResourceDeps(modelDirPath, version, resourceName);
     }
 }

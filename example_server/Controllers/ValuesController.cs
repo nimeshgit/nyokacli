@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using InfoTransferContainers;
 using ServerResourceDirNS;
+using System.Web.Http;
 
 namespace example_server.Controllers
 {
@@ -14,107 +15,51 @@ namespace example_server.Controllers
     [ApiController]
     public class ResourcesController : ControllerBase
     {
-        private static List<T> concatEnumerables<T>(List<IEnumerable<T>> valEnumerables)
-        {
-            List<T> concatenated = new List<T>();
-            
-            foreach (IEnumerable<T> valEnumerable in valEnumerables)
-            {
-                concatenated.AddRange(valEnumerable);
-            }
-            
-            return concatenated;
-        }
-        
-        private static Dictionary<K, V> mergeDictsUnsafe<K, V>(params Dictionary<K, V>[] dicts)
-        {
-            Dictionary<K, V> mergedDict = new Dictionary<K, V>();
-
-            foreach (Dictionary<K, V> dict in dicts)
-            {
-                foreach (KeyValuePair<K, V> entry in dict)
-                {
-                    mergedDict[entry.Key] = entry.Value;
-                }
-            }
-
-            return mergedDict;
-        }
-
         private ServerResourceDir serverDir = new ServerResourceDir(
             Path.Join(
                 System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile),
                 "ZMODServerFiles"
             )
         );
-        
-        [HttpGet("code")]
-        public ActionResult<Dictionary<string, FileInfoTransferContainer>> CodeGet()
+
+        [HttpGet("{resourceType}")]
+        public ActionResult<Dictionary<string, FileInfoTransferContainer>> GetAvailableResources(string resourceType)
         {
-            return serverDir.getCodeServerInfoDict();
+            if (resourceType == "code") return serverDir.getCodeServerInfoDict();
+            if (resourceType == "data") return serverDir.getDataServerInfoDict();
+            if (resourceType == "model") return serverDir.getModelServerInfoDict();
+            throw new FileNotFoundException();
         }
 
-        [HttpGet("data")]
-        public ActionResult<Dictionary<string, FileInfoTransferContainer>> DataGet()
+        [HttpGet("{resourceType}/{resourceName}/versions")]
+        public ActionResult<ResourceVersionsInfoContainer> GetResourceVersions(string resourceType, string resourceName)
         {
-            return serverDir.getDataServerInfoDict();
+            if (resourceType == "code") return serverDir.getCodeVersions(resourceName);
+            if (resourceType == "data") return serverDir.getDataVersions(resourceName);
+            if (resourceType == "model") return serverDir.getModelVersions(resourceName);
+            throw new FileNotFoundException();
         }
 
-        [HttpGet("model")]
-        public ActionResult<Dictionary<string, FileInfoTransferContainer>> ModelGet()
+        [HttpGet("{resourceType}/{resourceName}/versions/{version}/file")]
+        public FileResult GetResource(string resourceType, string resourceName, string version)
         {
-            return serverDir.getModelServerInfoDict();
+            if (resourceType == "code") return serverDir.getCodeStream(resourceName, version);
+            if (resourceType == "data") return serverDir.getDataStream(resourceName, version);
+            if (resourceType == "model") return serverDir.getModelStream(resourceName, version);
+            throw new FileNotFoundException();
         }
 
-        [HttpGet("code/{resourceName}/{version}")]
-        public FileResult GetCodeResource(string resourceName, string version)
+        [HttpGet("{resourceType}/{resourceName}/versions/{version}/dependencies")]
+        public ActionResult<ResourceDependencyInfoContainer> GetDependencies(string resourceType, string resourceName, string version)
         {
-            if (!serverDir.getCodeServerInfoDict().Keys.Contains(resourceName))
-            {
-                throw new FileNotFoundException();
-            }
-
-            return serverDir.getCodeStream(resourceName, version);
-        }
-
-        [HttpGet("data/{resourceName}/{version}")]
-        public FileResult GetDataResource(string resourceName, string version)
-        {
-            if (!serverDir.getDataServerInfoDict().Keys.Contains(resourceName))
-            {
-                throw new FileNotFoundException();
-            }
-
-            return serverDir.getDataStream(resourceName, version);
-        }
-
-        [HttpGet("model/{resourceName}/{version}")]
-        public FileResult GetModelResource(string resourceName, string version)
-        {
-            if (!serverDir.getModelServerInfoDict().Keys.Contains(resourceName))
-            {
-                throw new FileNotFoundException();
-            }
-
-            return serverDir.getModelStream(resourceName, version);
-        }
-
-        [HttpGet("code/{resourceName}/{version}/dependencies")]
-        public ActionResult<ResourceInfoContainer> GetcodeDependencies(string resourceName, string version)
-        {
-            return serverDir.getCodeResourceDeps(resourceName, version);
-        }
-        
-        [HttpGet("data/{resourceName}/{version}/dependencies")]
-        public ActionResult<ResourceInfoContainer> GetdataDependencies(string resourceName, string version)
-        {
-            return serverDir.getDataResourceDeps(resourceName, version);
-        }
-        
-        [HttpGet("model/{resourceName}/{version}/dependencies")]
-        public ActionResult<ResourceInfoContainer> GetmodelDependencies(string resourceName, string version)
-        {
-            return serverDir.getModelResourceDeps(resourceName, version);
+            System.Console.WriteLine("=================================================");
+            System.Console.WriteLine(resourceType);
+            System.Console.WriteLine(resourceName);
+            System.Console.WriteLine(version);
+            if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version);
+            if (resourceType == "data") return serverDir.getDataResourceDeps(resourceName, version);
+            if (resourceType == "model") return serverDir.getModelResourceDeps(resourceName, version);
+            throw new FileNotFoundException();
         }
     }
 }

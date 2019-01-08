@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace LoggerNS
+namespace CLIInterfaceNS
 {
-    public static class Logger
+    public static class CLIInterface
     {
         private static System.ConsoleColor warningColor = System.ConsoleColor.Yellow;
         private static System.ConsoleColor errorBackroundColor = System.ConsoleColor.Red;

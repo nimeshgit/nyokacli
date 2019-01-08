@@ -14,8 +14,19 @@ namespace InfoTransferContainers
         }
     }
 
+    public class ResourceVersionsInfoContainer
+    {
+        public List<string> versions;
+        public string latestVersion;
+        public ResourceVersionsInfoContainer(List<string> versions, string latestVersion)
+        {
+            this.versions = versions;
+            this.latestVersion = latestVersion;
+        }
+    }
 
-    public class ResourceInfoContainer
+
+    public class ResourceDependencyInfoContainer
     {
         public class DependencyDescription
         {
@@ -32,7 +43,7 @@ namespace InfoTransferContainers
         public Dictionary<string, DependencyDescription> dataDeps;
         public Dictionary<string, DependencyDescription> modelDeps;
 
-        public ResourceInfoContainer(
+        public ResourceDependencyInfoContainer(
             Dictionary<string, DependencyDescription> codeDeps,
             Dictionary<string, DependencyDescription> dataDeps,
             Dictionary<string, DependencyDescription> modelDeps)

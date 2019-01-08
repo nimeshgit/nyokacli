@@ -17,13 +17,14 @@ namespace NetworkUtilsNS
             {
             }
         }
+        
         private static readonly string resourcesUrl = "http://localhost:5000/api/resources";
 
         private static readonly System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
         public static Stream getResource(ResourceType resourceType, string resourceName, string version)
         {
-            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/{version}";
+            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/file";
             
             try
             {
@@ -36,14 +37,35 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static ResourceInfoContainer getResourceInfo(ResourceType resourceType, string resourceName, string version)
+        public static ResourceVersionsInfoContainer GetResourceVersions(ResourceType resourceType, string resourceName)
         {
-            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/{version}/dependencies";
+            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/versions";
 
             try
             {
                 string resourceJson = client.GetStringAsync(url).Result;
-                ResourceInfoContainer dependencies = JsonConvert.DeserializeObject<ResourceInfoContainer>(resourceJson);
+                ResourceVersionsInfoContainer versionsInfo = JsonConvert.DeserializeObject<ResourceVersionsInfoContainer>(resourceJson);
+                
+                return versionsInfo;
+            }
+            catch (JsonReaderException)
+            {
+                throw new NetworkUtilsException("Unable to process server response");
+            }
+            catch (System.Exception)
+            {
+                throw new NetworkUtilsException("Unable to get requested information from server");
+            }
+        }
+
+        public static ResourceDependencyInfoContainer getResourceInfo(ResourceType resourceType, string resourceName, string version)
+        {
+            string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/dependencies";
+
+            try
+            {
+                string resourceJson = client.GetStringAsync(url).Result;
+                ResourceDependencyInfoContainer dependencies = JsonConvert.DeserializeObject<ResourceDependencyInfoContainer>(resourceJson);
                 return dependencies;
             }
             catch (JsonReaderException)

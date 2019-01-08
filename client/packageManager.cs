@@ -5,7 +5,7 @@ using NetworkUtilsNS;
 using System.IO;
 using System.Linq;
 using InfoTransferContainers;
-using LoggerNS;
+using CLIInterfaceNS;
 using System.Threading.Tasks;
 
 // @TODO make sure all streams are being closed properly?
@@ -52,11 +52,11 @@ namespace PackageManagerNS
         public static void addPackage(ResourceType resourceType, string resourceName, string version)
         {
             FSOps.createCodeDataModelDirs();
-            Logger.log($"Adding {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
+            CLIInterface.log($"Adding {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
             
             if (FSOps.resourceExists(resourceType, resourceName))
             {
-                Logger.log($"{resourceType} resource \"{resourceName}\" already exists");
+                CLIInterface.log($"{resourceType} resource \"{resourceName}\" already exists");
                 return;
             }
 
@@ -71,11 +71,11 @@ namespace PackageManagerNS
 
                     Task.WaitAll(resourceFileTask, resourceVersionTask);
                 }
-                Logger.log("Resource added");
+                CLIInterface.log("Resource added");
             }
             catch (NetworkUtils.NetworkUtilsException e)
             {
-                Logger.logError("Network error: " + e.Message);
+                CLIInterface.logError("Network error: " + e.Message);
             }
         }
 
@@ -83,26 +83,26 @@ namespace PackageManagerNS
         {
             FSOps.createCodeDataModelDirs();
 
-            Logger.log($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
+            CLIInterface.log($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
             if (!FSOps.resourceExists(resourceType, resourceName))
             {
-                Logger.logError($"{resourceType} resource \"{resourceName}\" does not exist");
+                CLIInterface.logError($"{resourceType} resource \"{resourceName}\" does not exist");
                 return;
             }
 
             FSOps.removeResource(resourceType, resourceName);
-            Logger.log("Resource removed");
+            CLIInterface.log("Resource removed");
         }
 
         public static void listResources(ResourceType? listType)
         {
             if (!FSOps.hasNecessaryDirsAndFiles())
             {
-                Logger.logError($"Missing resource directories or files. Try running {ConstStrings.APPLICATION_ALIAS} init?");
+                CLIInterface.logError($"Missing resource directories or files. Try running {ConstStrings.APPLICATION_ALIAS} init?");
                 return;
             }
 
-            Logger.PrintTable table = new Logger.PrintTable {
+            CLIInterface.PrintTable table = new CLIInterface.PrintTable {
                 {"Type", 7},
                 {"Name of Resource", 30},
                 {"Version", 15},
@@ -129,7 +129,7 @@ namespace PackageManagerNS
                 }
             }
             
-            Logger.log(table);
+            CLIInterface.log(table);
         }
 
         public static void listDependencies(ResourceType resourceType, string resourceName, string version)
@@ -142,22 +142,22 @@ namespace PackageManagerNS
                 }
                 else
                 {
-                    Logger.logError("Provide version number for resources not currently downloaded");
+                    CLIInterface.logError("Provide version number for resources not currently downloaded");
                     return;
                 }
             }
             
-            ResourceInfoContainer deps;
+            ResourceDependencyInfoContainer deps;
             try {
                 deps = NetworkUtils.getResourceInfo(resourceType, resourceName, version);
             }
             catch (NetworkUtils.NetworkUtilsException ex)
             {
-                Logger.logError("Network error: " + ex.Message);
+                CLIInterface.logError("Network error: " + ex.Message);
                 return;
             }
 
-            Logger.PrintTable table = new Logger.PrintTable {
+            CLIInterface.PrintTable table = new CLIInterface.PrintTable {
                 {"Type", 7},
                 {"Name Of Dependency", 30},
                 {"Version", 15},
@@ -170,7 +170,7 @@ namespace PackageManagerNS
                 { ResourceType.model, NetworkUtils.getAvailableResources(ResourceType.model) },
             };
 
-            var showDepDict = new Dictionary<ResourceType, Dictionary<string, ResourceInfoContainer.DependencyDescription>>() {
+            var showDepDict = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>>() {
                 { ResourceType.code, deps.codeDeps },
                 { ResourceType.data, deps.dataDeps },
                 { ResourceType.model, deps.modelDeps },
@@ -189,7 +189,7 @@ namespace PackageManagerNS
                 }
             }
             
-            Logger.log(table);
+            CLIInterface.log(table);
         }
 
         public static void listAvailableResources(ResourceType? listType)
@@ -200,7 +200,7 @@ namespace PackageManagerNS
             
             try
             {
-                Logger.PrintTable printTable = new Logger.PrintTable {
+                CLIInterface.PrintTable printTable = new CLIInterface.PrintTable {
                     {"Type", 7},
                     {"Name of Resource", 30},
                     {"Latest Version", 15},
@@ -222,15 +222,15 @@ namespace PackageManagerNS
                     }
                 }
                 
-                Logger.log(printTable);
+                CLIInterface.log(printTable);
             }
             catch (NetworkUtils.NetworkUtilsException ex)
             {
-                Logger.logError("Network error: " + ex.Message);
+                CLIInterface.logError("Network error: " + ex.Message);
             }
         }
 
-        private static ResourceInfoContainer infoForLocalResource(ResourceType resourceType, string resourceName)
+        private static ResourceDependencyInfoContainer infoForLocalResource(ResourceType resourceType, string resourceName)
         {
             string version = FSOps.getResourceVersion(resourceType, resourceName);
             return NetworkUtils.getResourceInfo(resourceType, resourceName, version);
@@ -251,9 +251,9 @@ namespace PackageManagerNS
             throw new System.InvalidOperationException(); // @QUESTION is this an appropriate exception?
         }
 
-        private static void addDependenciesToInvestigateDict(Dictionary<ResourceType, List<string>> investigateResourcesByType, ResourceInfoContainer infoContainer)
+        private static void addDependenciesToInvestigateDict(Dictionary<ResourceType, List<string>> investigateResourcesByType, ResourceDependencyInfoContainer infoContainer)
         {
-            var dependencyDescriptionsByResourceType = new Dictionary<ResourceType, Dictionary<string, ResourceInfoContainer.DependencyDescription>> {
+            var dependencyDescriptionsByResourceType = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
                 { ResourceType.code, infoContainer.codeDeps },
                 { ResourceType.data, infoContainer.dataDeps },
                 { ResourceType.model, infoContainer.modelDeps },
@@ -271,7 +271,7 @@ namespace PackageManagerNS
             }
         }
 
-        public static void pruneTo(IEnumerable<string> enumerablePruneToCode, IEnumerable<string> enumerablePruneToData, IEnumerable<string> enumerablePruneToModel)
+        public static void pruneTo(List<string> pruneToCode, List<string> pruneToData, List<string> pruneToModel)
         {
             var resourcesToKeep = new Dictionary<ResourceType, List<string>> {
                 { ResourceType.code, new List<string>() },
@@ -280,9 +280,9 @@ namespace PackageManagerNS
             };
             
             var resourcesToInvestigateByType = new Dictionary<ResourceType, List<string>> {
-                { ResourceType.code, enumerablePruneToCode.ToList() },
-                { ResourceType.data, enumerablePruneToData.ToList() },
-                { ResourceType.model, enumerablePruneToModel.ToList() },
+                { ResourceType.code, pruneToCode },
+                { ResourceType.data, pruneToData },
+                { ResourceType.model, pruneToModel },
             };
 
             while (
@@ -293,7 +293,7 @@ namespace PackageManagerNS
 
                 if (!FSOps.resourceExists(investigateResourceType, investigateResourceName))
                 {
-                    Logger.logWarning($"Skipping missing {investigateResourceType.ToString()} resource \"{investigateResourceName}\"");
+                    CLIInterface.logWarning($"Skipping missing {investigateResourceType.ToString()} resource \"{investigateResourceName}\"");
                     continue;
                 }
                 else
@@ -303,7 +303,7 @@ namespace PackageManagerNS
                 
                 string version = FSOps.getResourceVersion(investigateResourceType, investigateResourceName);
 
-                ResourceInfoContainer resourceInfo = NetworkUtils.getResourceInfo(investigateResourceType, investigateResourceName, version);
+                ResourceDependencyInfoContainer resourceInfo = NetworkUtils.getResourceInfo(investigateResourceType, investigateResourceName, version);
                 
                 addDependenciesToInvestigateDict(resourcesToInvestigateByType, resourceInfo);
             }
@@ -321,18 +321,18 @@ namespace PackageManagerNS
                 {
                     if (resourcesToKeep[resourceType].Contains(presentResourceName))
                     {
-                        Logger.log($"Keeping {resourceType.ToString()} resource \"{presentResourceName}\"");
+                        CLIInterface.log($"Keeping {resourceType.ToString()} resource \"{presentResourceName}\"");
                     }
                     else
                     {
                         try
                         {
                             FSOps.removeResource(resourceType, presentResourceName);
-                            Logger.log($"Removed {resourceType.ToString()} resource {presentResourceName}");
+                            CLIInterface.log($"Removed {resourceType.ToString()} resource {presentResourceName}");
                         }
                         catch (System.Exception)
                         {
-                            Logger.logError($"Failed to remove {resourceType.ToString()} resource {presentResourceName}");
+                            CLIInterface.logError($"Failed to remove {resourceType.ToString()} resource {presentResourceName}");
                             successful = false;
                         }
                     }
@@ -341,7 +341,26 @@ namespace PackageManagerNS
 
             if (!successful)
             {
-                Logger.logError("Failed to remove some packages.");
+                CLIInterface.logError("Failed to remove some packages.");
+            }
+        }
+
+        public static void publishResource(
+            ResourceType resourceType,
+            string resourceName,
+            string resourceVersion,
+            List<string> codeDeps,
+            List<string> dataDeps,
+            List<string> modelDeps)
+        {
+            var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
+                { ResourceType.code, NetworkUtils.getAvailableResources(ResourceType.code) },
+                { ResourceType.data, NetworkUtils.getAvailableResources(ResourceType.data) },
+                { ResourceType.model, NetworkUtils.getAvailableResources(ResourceType.model) },
+            };
+
+            if (allAvailableResources[resourceType].ContainsKey(resourceName))
+            {
             }
         }
     }

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using PackageManagerNS;
 using CommandLine.Text;
 using Constants;
+using CLIInterfaceNS;
+using System.Linq;
 
 namespace ny_cli
 {
@@ -168,7 +170,8 @@ namespace ny_cli
     }
 
     [Verb("pruneto", HelpText = "Prune the given resource type to the provided resources")]
-    class PruneToOptions {
+    class PruneToOptions
+    {
         [Option("code", Separator=',', HelpText = "code resource(s) to keep, separated by commas")]
         public IEnumerable<string> keepCode {get;set;}
 
@@ -188,6 +191,50 @@ namespace ny_cli
                         keepCode= new string[] {"some_code.py"},
                         keepModel= new string[] {"model1.pmml", "model2.pmml"},
                         keepData= new string[] {},
+                    }),
+                };
+            }
+        }
+    }
+
+    [Verb("publish", HelpText = "Publish a resource to server")]
+    class PublishOptions
+    {
+        
+        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
+        public string resourceType {get;set;}
+
+        [Value(1, Required = true, HelpText = "Resource name")]
+        public string resourceName {get;set;}
+
+        [Value(2, Required = false, HelpText = "Resource version")]
+        public string version {get;set;} = null;
+
+        [Option("codedeps", Separator=',', HelpText = "code depedencies, separated by commas. Example: code.py@1.2.3")]
+        public IEnumerable<string> codeDeps {get;set;}
+
+        [Option("modeldeps", Separator=',', HelpText = "model depedencies, separated by commas. Example: model39.pmml@13.4.2")]
+        public IEnumerable<string> modelDeps {get;set;}
+
+        [Option("datadeps", Separator=',', HelpText = "data depedencies, separated by commas. Example: dataset.csv@1.0.0")]
+        public IEnumerable<string> dataDeps {get;set;}
+
+        public IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example("Publish a code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
+                        resourceType = "code",
+                        resourceName = "code_file.ipynb",
+                        version = "1.2.3",
+                    }),
+                    new Example("Publish model1.pmml version 10.2.3 with a data dependency called dataset.json, version 1.2.3", new PublishOptions {
+                        resourceType = "model",
+                        resourceName = "model1.pmml",
+                        version = "10.2.3",
+                        dataDeps = new string[] {"dataset.json@1.2.3"},
                     }),
                 };
             }
@@ -219,7 +266,7 @@ namespace ny_cli
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PruneToOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PruneToOptions, PublishOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     PackageManager.initDirectories();
                 })
@@ -237,7 +284,7 @@ namespace ny_cli
                         }
                         catch (InvalidResourceTypeException)
                         {
-                            System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                            CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
                         }
                     }
                 })
@@ -268,7 +315,7 @@ namespace ny_cli
                         }
                         catch (InvalidResourceTypeException)
                         {
-                            System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                            CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
                         }
                     }
                 })
@@ -283,15 +330,33 @@ namespace ny_cli
                     }
                     catch (InvalidResourceTypeException)
                     {
-                        System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
+                        CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
                     }
                 })
                 .WithParsed<PruneToOptions>(opts => {
                     PackageManager.pruneTo(
-                      opts.keepCode,
-                      opts.keepData,
-                      opts.keepModel  
+                      opts.keepCode.ToList(),
+                      opts.keepData.ToList(),
+                      opts.keepModel.ToList()
                     );
+                })
+                .WithParsed<PublishOptions>(opts => {
+                    try
+                    {
+                        ResourceType resourceType = parseResourceType(opts.resourceType);
+                        PackageManager.publishResource(
+                            resourceType,
+                            opts.resourceName,
+                            opts.version,
+                            opts.codeDeps.ToList(),
+                            opts.dataDeps.ToList(),
+                            opts.modelDeps.ToList()
+                        );
+                    }
+                    catch (InvalidResourceTypeException)
+                    {
+                        CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
+                    }
                 });
         }
     }
