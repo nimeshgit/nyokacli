@@ -66,53 +66,53 @@ namespace example_server.Controllers
             return serverDir.getModelServerInfoDict();
         }
 
-        [HttpGet("code/{resourceName}")]
-        public FileResult GetCodeResource(string resourceName)
+        [HttpGet("code/{resourceName}/{version}")]
+        public FileResult GetCodeResource(string resourceName, string version)
         {
             if (!serverDir.getCodeServerInfoDict().Keys.Contains(resourceName))
             {
                 throw new FileNotFoundException();
             }
 
-            return serverDir.getCodeStream(resourceName);
+            return serverDir.getCodeStream(resourceName, version);
         }
 
-        [HttpGet("data/{resourceName}")]
-        public FileResult GetDataResource(string resourceName)
+        [HttpGet("data/{resourceName}/{version}")]
+        public FileResult GetDataResource(string resourceName, string version)
         {
             if (!serverDir.getDataServerInfoDict().Keys.Contains(resourceName))
             {
                 throw new FileNotFoundException();
             }
 
-            return serverDir.getDataStream(resourceName);
+            return serverDir.getDataStream(resourceName, version);
         }
 
-        [HttpGet("model/{resourceName}")]
-        public FileResult GetModelResource(string resourceName)
+        [HttpGet("model/{resourceName}/{version}")]
+        public FileResult GetModelResource(string resourceName, string version)
         {
             if (!serverDir.getModelServerInfoDict().Keys.Contains(resourceName))
             {
                 throw new FileNotFoundException();
             }
 
-            return serverDir.getModelStream(resourceName);
+            return serverDir.getModelStream(resourceName, version);
         }
 
         [HttpGet("code/{resourceName}/{version}/dependencies")]
-        public ActionResult<DepsTransferContainer> GetcodeDependencies(string resourceName, string version)
+        public ActionResult<ResourceInfoContainer> GetcodeDependencies(string resourceName, string version)
         {
             return serverDir.getCodeResourceDeps(resourceName, version);
         }
         
         [HttpGet("data/{resourceName}/{version}/dependencies")]
-        public ActionResult<DepsTransferContainer> GetdataDependencies(string resourceName, string version)
+        public ActionResult<ResourceInfoContainer> GetdataDependencies(string resourceName, string version)
         {
             return serverDir.getDataResourceDeps(resourceName, version);
         }
         
         [HttpGet("model/{resourceName}/{version}/dependencies")]
-        public ActionResult<DepsTransferContainer> GetmodelDependencies(string resourceName, string version)
+        public ActionResult<ResourceInfoContainer> GetmodelDependencies(string resourceName, string version)
         {
             return serverDir.getModelResourceDeps(resourceName, version);
         }

@@ -15,26 +15,27 @@ namespace InfoTransferContainers
     }
 
 
-    public class DepsTransferContainer
+    public class ResourceInfoContainer
     {
-        public class DepDescription
+        public class DependencyDescription
         {
             public string versionStr;
+            public long byteCount;
 
-            public DepDescription(string versionStr)
+            public DependencyDescription(string versionStr)
             {
                 this.versionStr = versionStr;
             }
         }
 
-        public Dictionary<string, DepDescription> codeDeps;
-        public Dictionary<string, DepDescription> dataDeps;
-        public Dictionary<string, DepDescription> modelDeps;
+        public Dictionary<string, DependencyDescription> codeDeps;
+        public Dictionary<string, DependencyDescription> dataDeps;
+        public Dictionary<string, DependencyDescription> modelDeps;
 
-        public DepsTransferContainer(
-            Dictionary<string, DepDescription> codeDeps,
-            Dictionary<string, DepDescription> dataDeps,
-            Dictionary<string, DepDescription> modelDeps)
+        public ResourceInfoContainer(
+            Dictionary<string, DependencyDescription> codeDeps,
+            Dictionary<string, DependencyDescription> dataDeps,
+            Dictionary<string, DependencyDescription> modelDeps)
         {
             this.codeDeps = codeDeps;
             this.dataDeps = dataDeps;

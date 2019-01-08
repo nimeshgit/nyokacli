@@ -4,6 +4,8 @@ using System.IO;
 using Constants;
 using NyokaInfoContainerNS;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using LoggerNS;
 
 namespace FSOpsNS
 {
@@ -12,22 +14,24 @@ namespace FSOpsNS
         private static readonly string codeDirName = "code";
         private static readonly string dataDirName = "data";
         private static readonly string modelDirName = "model";
-        private static readonly string nyokaFileName = ".nyoka";
+        private static readonly string nyokaFolderName = ".nyoka";
+
+        private static readonly string nyokaVersionExtension = ".version";
         private static readonly string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
         
         public static bool hasNecessaryDirsAndFiles()
         {
-            foreach (string dirNames in dirNames)
+            foreach (string dirName in dirNames)
             {
-                if (!Directory.Exists(dirNames))
+                if (!Directory.Exists(dirName))
                 {
                     return false;
                 }
-            }
-
-            if (!File.Exists(nyokaFileName))
-            {
-                return false;
+                
+                if (!Directory.Exists(Path.Join(dirName, nyokaFolderName)))
+                {
+                    return false;
+                }
             }
 
             return true;
@@ -42,68 +46,67 @@ namespace FSOpsNS
             
             foreach (string dirName in dirNames)
             {
-                if (Directory.Exists(dirName))
-                {
-                    if (logExisting)
-                    {
-                        System.Console.WriteLine($"Directory \"{dirName}\" already exists");
-                    }
-                } 
-                else
-                {
-                    try
-                    {
-                        Directory.CreateDirectory(dirName);
-                        
-                        if (logCreated)
-                        {
-                            System.Console.WriteLine($"Directory \"{dirName}\" created");
-                        }
-                    }
-                    catch (IOException)
-                    {
-                        if (logError)
-                        {
-                            System.Console.WriteLine($"Failed to create directory \"{dirName}\"");
-                        }
-                        successful = false;
-                    }
-                }
+                tryCreateDirIfNonExistent(
+                    dirName,
+                    logExisting,
+                    logCreated,
+                    logError
+                );
+
+                tryCreateDirIfNonExistent(
+                    Path.Join(dirName, nyokaFolderName),
+                    logExisting,
+                    logCreated,
+                    logError
+                );
             }
 
-            if (File.Exists(nyokaFileName))
+            return successful;
+        }
+
+        private static bool tryCreateDirIfNonExistent(
+            string dirName,
+            bool logExisting,
+            bool logCreated,
+            bool logError)
+        {
+            if (Directory.Exists(dirName))
             {
                 if (logExisting)
                 {
-                    System.Console.WriteLine($"File \"{nyokaFileName}\" already exists");
+                    Logger.log($"Directory \"{dirName}\" already exists");
                 }
-            }
+                return true;
+            } 
             else
             {
                 try
                 {
-                    using (StreamWriter writer = File.CreateText(nyokaFileName))
-                    {
-                        NyokaInfoContainer emptyContainer = new NyokaInfoContainer();
-                        writer.Write(JsonConvert.SerializeObject(emptyContainer));
-                    }
+                    Directory.CreateDirectory(dirName);
                     
                     if (logCreated)
                     {
-                        System.Console.WriteLine($"File \"{nyokaFileName}\" created");
+                        Logger.log($"Directory \"{dirName}\" created");
                     }
+                    return true;
                 }
                 catch (IOException)
                 {
                     if (logError)
                     {
-                        System.Console.WriteLine($"Failed to create file \"{nyokaFileName}\"");
+                        Logger.log($"Failed to create directory \"{dirName}\"");
                     }
-                    successful = false;
+                    return false;
                 }
             }
+        }
 
-            return successful;
+        private static void createDirectoryNyokaFiles(
+            string dirName,
+            bool logExisting,
+            bool logCreated,
+            bool logError)
+        {
         }
 
         public static void removeResource(ResourceType resourceType, string resourceName)
@@ -123,7 +126,22 @@ namespace FSOpsNS
 
         public static FileStream createResourceFile(ResourceType resourceType, string resourceName)
         {
-            return File.Create($"{resourceType.ToString()}/{resourceName}");
+            return File.Create(Path.Join(resourceType.ToString(), resourceName));
+        }
+
+        public static StreamWriter createResourceFileNyokaVersionFile(ResourceType resourceType, string resourceName)
+        {
+            return File.CreateText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+        }
+
+        public static string getResourceVersion(ResourceType resourceType, string resourceName)
+        {
+            return File.ReadAllText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
+        }
+
+        public static long getResourceSize(ResourceType resourceType, string resourceName)
+        {
+            return new FileInfo(Path.Join(resourceType.ToString(), resourceName)).Length;
         }
     }
 }

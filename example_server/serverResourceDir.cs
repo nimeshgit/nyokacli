@@ -82,8 +82,9 @@ namespace ServerResourceDirNS
             return infoDict;
         }
 
-        private FileStreamResult getDirFileStreamResult(string codeDirPath, string fileName) {
-            string filePath = Path.Combine(codeDirPath, fileName);
+        private FileStreamResult getDirFileStreamResult(string codeDirPath, string resourceName, string version) {
+            string filePath = Path.Combine(codeDirPath, resourceName, version, resourceName);
+            System.Console.WriteLine(filePath);
             return new FileStreamResult(
                 File.OpenRead(filePath),
                 getMimeType(new FileInfo(filePath))
@@ -110,7 +111,7 @@ namespace ServerResourceDirNS
             }
         }
 
-        private DepsTransferContainer getDirResourceDeps(string codeDirPath, string version, string resourceName)
+        private ResourceInfoContainer getDirResourceDeps(string codeDirPath, string version, string resourceName)
         {
             string depsFilePath = Path.Combine(
                 codeDirPath,
@@ -122,10 +123,10 @@ namespace ServerResourceDirNS
             string depsJson = File.ReadAllText(depsFilePath);
             DepsFileJson fileJson = JsonConvert.DeserializeObject<DepsFileJson>(depsJson);
 
-            return new DepsTransferContainer(
-                fileJson.code.ToDictionary(p => p.Key, p => new DepsTransferContainer.DepDescription(p.Value.version)),
-                fileJson.data.ToDictionary(p => p.Key, p => new DepsTransferContainer.DepDescription(p.Value.version)),
-                fileJson.model.ToDictionary(p => p.Key, p => new DepsTransferContainer.DepDescription(p.Value.version))
+            return new ResourceInfoContainer(
+                fileJson.code.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version)),
+                fileJson.data.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version)),
+                fileJson.model.ToDictionary(p => p.Key, p => new ResourceInfoContainer.DependencyDescription(p.Value.version))
             );
         }
         
@@ -134,16 +135,16 @@ namespace ServerResourceDirNS
             root = pathArg;
         }
 
-        public FileStreamResult getCodeStream(string fileName) => getDirFileStreamResult(codeDirPath, fileName);
-        public FileStreamResult getDataStream(string fileName) => getDirFileStreamResult(dataDirPath, fileName);
-        public FileStreamResult getModelStream(string fileName) => getDirFileStreamResult(modelDirPath, fileName);
+        public FileStreamResult getCodeStream(string fileName, string version) => getDirFileStreamResult(codeDirPath, fileName, version);
+        public FileStreamResult getDataStream(string fileName, string version) => getDirFileStreamResult(dataDirPath, fileName, version);
+        public FileStreamResult getModelStream(string fileName, string version) => getDirFileStreamResult(modelDirPath, fileName, version);
 
         public Dictionary<string, FileInfoTransferContainer> getCodeServerInfoDict() => getDirServerInfoDict(codeDirPath);
         public Dictionary<string, FileInfoTransferContainer> getDataServerInfoDict() => getDirServerInfoDict(dataDirPath);
         public Dictionary<string, FileInfoTransferContainer> getModelServerInfoDict() => getDirServerInfoDict(modelDirPath);
 
-        public DepsTransferContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
-        public DepsTransferContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);
-        public DepsTransferContainer getModelResourceDeps(string resourceName, string version) => getDirResourceDeps(modelDirPath, version, resourceName);
+        public ResourceInfoContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
+        public ResourceInfoContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);
+        public ResourceInfoContainer getModelResourceDeps(string resourceName, string version) => getDirResourceDeps(modelDirPath, version, resourceName);
     }
 }

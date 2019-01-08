@@ -21,6 +21,9 @@ namespace ny_cli
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
+        [Value(2, Required = true, HelpText = "Resource version")]
+        public string version {get;set;}
+        
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
         public static IEnumerable<Example> Examples
         {
@@ -49,6 +52,7 @@ namespace ny_cli
 
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
+
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
         public static IEnumerable<Example> Examples
@@ -135,8 +139,8 @@ namespace ny_cli
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
-        [Value(2, Required = true, HelpText = "Resource version")]
-        public string version {get;set;}
+        [Value(2, Required = false, HelpText = "Resource version")]
+        public string version {get;set;} = null;
 
         public static IEnumerable<Example> Examples
         {
@@ -158,6 +162,33 @@ namespace ny_cli
                             resourceName = "name_of_server_model.pmml"
                         }
                     )
+                };
+            }
+        }
+    }
+
+    [Verb("pruneto", HelpText = "Prune the given resource type to the provided resources")]
+    class PruneToOptions {
+        [Option("code", Separator=',', HelpText = "code resource(s) to keep, separated by commas")]
+        public IEnumerable<string> keepCode {get;set;}
+
+        [Option("model", Separator=',', HelpText = "model resource(s) to keep, separated by commas")]
+        public IEnumerable<string> keepModel {get;set;}
+
+        [Option("data", Separator=',', HelpText = "data resource(s) to keep, separated by commas")]
+        public IEnumerable<string> keepData {get;set;}
+
+        public IEnumerable<Example> Examples
+        {
+            get
+            {
+                return new List<Example>()
+                {
+                    new Example("Keep a code resource and two model resources", new PruneToOptions {
+                        keepCode= new string[] {"some_code.py"},
+                        keepModel= new string[] {"model1.pmml", "model2.pmml"},
+                        keepData= new string[] {},
+                    }),
                 };
             }
         }
@@ -188,7 +219,7 @@ namespace ny_cli
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PruneToOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     PackageManager.initDirectories();
                 })
@@ -213,7 +244,8 @@ namespace ny_cli
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
                         opts.resourceType,
-                        opts.resourceName
+                        opts.resourceName,
+                        opts.version
                     );
                 })
                 .WithParsed<RemoveOptions>(opts => {
@@ -253,6 +285,13 @@ namespace ny_cli
                     {
                         System.Console.WriteLine($"Invalid resource type \"{opts.resourceType}\"");
                     }
+                })
+                .WithParsed<PruneToOptions>(opts => {
+                    PackageManager.pruneTo(
+                      opts.keepCode,
+                      opts.keepData,
+                      opts.keepModel  
+                    );
                 });
         }
     }
