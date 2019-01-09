@@ -18,7 +18,7 @@ namespace NetworkUtilsNS
             }
         }
         
-        private static readonly string resourcesUrl = "http://localhost:5000/api/resources";
+        private static readonly string resourcesUrl = "http://localhost:5000/api/getresources";
 
         private static readonly System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
@@ -37,7 +37,7 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static ResourceVersionsInfoContainer GetResourceVersions(ResourceType resourceType, string resourceName)
+        public static ResourceVersionsInfoContainer getResourceVersions(ResourceType resourceType, string resourceName)
         {
             string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/versions";
 
@@ -58,7 +58,7 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static ResourceDependencyInfoContainer getResourceInfo(ResourceType resourceType, string resourceName, string version)
+        public static ResourceDependencyInfoContainer getResourceDependencies(ResourceType resourceType, string resourceName, string version)
         {
             string url = $"{resourcesUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/dependencies";
 

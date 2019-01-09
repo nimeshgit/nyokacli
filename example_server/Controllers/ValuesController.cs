@@ -11,7 +11,7 @@ using System.Web.Http;
 
 namespace example_server.Controllers
 {
-    [Route("api/resources")]
+    [Route("api/getresources")]
     [ApiController]
     public class ResourcesController : ControllerBase
     {
@@ -52,14 +52,19 @@ namespace example_server.Controllers
         [HttpGet("{resourceType}/{resourceName}/versions/{version}/dependencies")]
         public ActionResult<ResourceDependencyInfoContainer> GetDependencies(string resourceType, string resourceName, string version)
         {
-            System.Console.WriteLine("=================================================");
-            System.Console.WriteLine(resourceType);
-            System.Console.WriteLine(resourceName);
-            System.Console.WriteLine(version);
             if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version);
             if (resourceType == "data") return serverDir.getDataResourceDeps(resourceName, version);
             if (resourceType == "model") return serverDir.getModelResourceDeps(resourceName, version);
             throw new FileNotFoundException();
+        }
+
+        [HttpPost]
+        public async Task PostTodoItem(string str)
+        {
+            // _context.TodoItems.Add(todoItem);
+            // await _context.SaveChangesAsync();
+
+            // return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
         }
     }
 }

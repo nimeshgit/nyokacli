@@ -41,7 +41,7 @@ namespace CLIInterfaceNS
                 yield break;
             }
 
-            public void addLine(params string[] row)
+            public void addRow(params string[] row)
             {
                 if (row.Length != this.columnWidths.Count) throw new ColumnCountException();
                 
@@ -73,12 +73,38 @@ namespace CLIInterfaceNS
             System.Console.Write("\n");
         }
 
-        public static void log(string str)
+        public static bool askYesOrNo(string question)
+        {
+            bool? response = null;
+            
+            while (!response.HasValue)
+            {
+                System.Console.Write(question + " [y/n] ");
+                string input = System.Console.ReadLine();
+                
+                if (input.Trim().ToLower() == "y")
+                {
+                    response = true;
+                }
+                else if (input.Trim().ToLower() == "n")
+                {
+                    response = false;
+                }
+                else
+                {
+                    System.Console.WriteLine($"Invalid response \"{input.Trim()}\": type in \"y\" or \"n\"");
+                }
+            }
+
+            return response.Value;
+        }
+
+        public static void logLine(string str)
         {
             System.Console.WriteLine(str);
         }
 
-        public static void log(PrintTable table)
+        public static void logTable(PrintTable table)
         {
             string horizontalLine = "";
             

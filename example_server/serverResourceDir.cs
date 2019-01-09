@@ -9,6 +9,7 @@ namespace ServerResourceDirNS
 {
     public class ServerResourceDir
     {
+        private static string depsFileExtension = ".deps";
         private static string getMimeType(FileInfo fileInfo) {
             string extension = fileInfo.Name.Substring(fileInfo.Name.LastIndexOf(".") + 1);
 
@@ -25,12 +26,6 @@ namespace ServerResourceDirNS
             }
         }
 
-        private static FileInfoTransferContainer createServerFileInfo(FileInfo fileInfo) {
-            return new FileInfoTransferContainer(
-                fileInfo.Length,
-                "???"
-            );
-        }
 
         private static int compareVersions(string v1, string v2) {
             List<int> v1Sections = v1.Split(".").Select(sec => int.Parse(sec)).ToList();
@@ -54,11 +49,11 @@ namespace ServerResourceDirNS
         private Dictionary<string, FileInfoTransferContainer> getDirServerInfoDict(string parentDirPath) {
             Dictionary<string, FileInfoTransferContainer> infoDict = new Dictionary<string, FileInfoTransferContainer>();
             
-            List<string> dirNames = Directory.GetDirectories(parentDirPath)
+            List<string> resourceNames = Directory.GetDirectories(parentDirPath)
                 .Select(dirPath => new DirectoryInfo(dirPath).Name).ToList();
             
-            foreach (string dirName in dirNames) {                
-                string resourceDirPath = Path.Combine(parentDirPath, dirName);
+            foreach (string resourceName in resourceNames) {                
+                string resourceDirPath = Path.Combine(parentDirPath, resourceName);
                 List<string> versions = Directory.GetDirectories(resourceDirPath)
                     .Select(path => new DirectoryInfo(path).Name).ToList();
 
@@ -69,13 +64,13 @@ namespace ServerResourceDirNS
                 
                 string resourceFilePath = Path.Combine(
                     parentDirPath,
-                    dirName,
+                    resourceName,
                     latestVersion,
-                    dirName
+                    resourceName
                 );
 
-                infoDict[dirName] = new FileInfoTransferContainer(
-                    new FileInfo(resourceFilePath).Length,
+                infoDict[resourceName] = new FileInfoTransferContainer(
+                    resourceFileSize(parentDirPath, latestVersion, resourceName),
                     latestVersion
                 );
             }
@@ -94,22 +89,34 @@ namespace ServerResourceDirNS
 
         private class DepsFileJson {
             public class DepsFileEntry {
+                public string key;
                 public string version;
+
+                public DepsFileEntry(string key, string version)
+                {
+                    this.key = key;
+                    this.version = version;
+                }
             }
             
-            public Dictionary<string, DepsFileEntry> code;
-            public Dictionary<string, DepsFileEntry> data;
-            public Dictionary<string, DepsFileEntry> model;
+            public List<DepsFileEntry> code;
+            public List<DepsFileEntry> data;
+            public List<DepsFileEntry> model;
 
             public DepsFileJson(
-                Dictionary<string, DepsFileEntry> code,
-                Dictionary<string, DepsFileEntry> data,
-                Dictionary<string, DepsFileEntry> model
+                List<DepsFileEntry> code,
+                List<DepsFileEntry> data,
+                List<DepsFileEntry> model
             ) {
                 this.code = code;
                 this.data = data;
                 this.model = model;
             }
+        }
+
+        private long resourceFileSize(string parentDirPath, string version, string resourceName)
+        {
+            return new FileInfo(Path.Combine(parentDirPath, resourceName, version, resourceName)).Length;
         }
 
         private ResourceDependencyInfoContainer getDirResourceDeps(string parentDirPath, string version, string resourceName)
@@ -118,20 +125,87 @@ namespace ServerResourceDirNS
                 parentDirPath,
                 resourceName,
                 version,
-                resourceName + ".deps"
+                resourceName + depsFileExtension
             );
+
             
             string depsJson = File.ReadAllText(depsFilePath);
             DepsFileJson fileJson = JsonConvert.DeserializeObject<DepsFileJson>(depsJson);
 
-            return new ResourceDependencyInfoContainer(
-                fileJson.code.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version)),
-                fileJson.data.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version)),
-                fileJson.model.ToDictionary(p => p.Key, p => new ResourceDependencyInfoContainer.DependencyDescription(p.Value.version))
-            );
+            ResourceDependencyInfoContainer infoContainer = new ResourceDependencyInfoContainer();
+
+            // cloning
+            List<DepsFileJson.DepsFileEntry> codeUninvestigated = fileJson.code.Select(x => x).ToList();
+            List<DepsFileJson.DepsFileEntry> dataUninvestigated = fileJson.data.Select(x => x).ToList();
+            List<DepsFileJson.DepsFileEntry> modelUninvestigated = fileJson.model.Select(x => x).ToList();
+
+            while (true)
+            {
+                string dependenciesOfDependencyPath = null;
+
+                (List<DepsFileJson.DepsFileEntry>, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>, List<DepsFileJson.DepsFileEntry>, string)[] resourceGroups = {
+                    (codeUninvestigated, infoContainer.codeDeps, fileJson.code, codeDirPath),
+                    (dataUninvestigated, infoContainer.dataDeps, fileJson.data, dataDirPath),
+                    (modelUninvestigated, infoContainer.modelDeps, fileJson.model, modelDirPath),
+                };
+                
+                bool noMoreUninvestigated = true;
+                foreach (var (resourceUninvestigated, infoContainerResourceDeps, directResourceDeps, resourceDirPath) in resourceGroups)
+                {
+                    if (resourceUninvestigated.Count != 0)
+                    {
+                        noMoreUninvestigated = false;
+                        DepsFileJson.DepsFileEntry investigating = resourceUninvestigated.First();
+
+                        infoContainerResourceDeps[investigating.key] = new ResourceDependencyInfoContainer.DependencyDescription(
+                            investigating.version,
+                            directResourceDeps.Any(v => v.key == investigating.key),
+                            resourceFileSize(resourceDirPath, investigating.version, investigating.key)
+                        );
+                        
+                        dependenciesOfDependencyPath = Path.Combine(
+                            resourceDirPath,
+                            investigating.key,
+                            investigating.version,
+                            investigating.key + depsFileExtension
+                        );
+
+                        resourceUninvestigated.RemoveAt(0);
+                        break;
+                    }
+                }
+                
+                if (noMoreUninvestigated)
+                {
+                    break;
+                }
+                else
+                {
+                    DepsFileJson dependenciesOfDependency = JsonConvert.DeserializeObject<DepsFileJson>(File.ReadAllText(dependenciesOfDependencyPath));
+
+                    (List<DepsFileJson.DepsFileEntry>, List<DepsFileJson.DepsFileEntry>)[] assignPairs = {
+                        (dependenciesOfDependency.code, codeUninvestigated),
+                        (dependenciesOfDependency.data, dataUninvestigated),
+                        (dependenciesOfDependency.model, modelUninvestigated)
+                    };
+
+                    foreach (var (newDeps, mergeIntoDeps) in assignPairs)
+                    {
+                        foreach (var newDepInfo in newDeps)
+                        {
+                            if (!mergeIntoDeps.Any(mergeInfo => mergeInfo.key == newDepInfo.key))
+                            {
+                                mergeIntoDeps.Add(newDepInfo);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return infoContainer;
         }
 
-        private ResourceVersionsInfoContainer GetResourceVersions(string parentDirPath, string resourceName)
+        private ResourceVersionsInfoContainer getResourceVersions(string parentDirPath, string resourceName)
         {
             List<string> versions = Directory.GetDirectories(Path.Combine(parentDirPath, resourceName))
                 .Select(path => new DirectoryInfo(path).Name).ToList();

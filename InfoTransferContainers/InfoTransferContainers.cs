@@ -30,12 +30,15 @@ namespace InfoTransferContainers
     {
         public class DependencyDescription
         {
+            public bool isDirectDependency;
             public string versionStr;
             public long byteCount;
 
-            public DependencyDescription(string versionStr)
+            public DependencyDescription(string versionStr, bool isDirectDependency, long byteCount)
             {
                 this.versionStr = versionStr;
+                this.isDirectDependency = isDirectDependency;
+                this.byteCount = byteCount;
             }
         }
 
@@ -51,6 +54,13 @@ namespace InfoTransferContainers
             this.codeDeps = codeDeps;
             this.dataDeps = dataDeps;
             this.modelDeps = modelDeps;
+        }
+
+        public ResourceDependencyInfoContainer()
+        {
+            this.codeDeps = new Dictionary<string, DependencyDescription>();
+            this.dataDeps = new Dictionary<string, DependencyDescription>();
+            this.modelDeps = new Dictionary<string, DependencyDescription>();
         }
     }
 }

@@ -10,6 +10,12 @@ namespace FSOpsNS
 {
     public static class FSOps
     {
+        public class FSOpsException : System.Exception {
+            public FSOpsException(string message)
+            : base(message)
+            {
+            }
+        }
         private static readonly string codeDirName = "code";
         private static readonly string dataDirName = "data";
         private static readonly string modelDirName = "model";
@@ -20,120 +26,187 @@ namespace FSOpsNS
         
         public static bool hasNecessaryDirsAndFiles()
         {
-            foreach (string dirName in dirNames)
+            try
             {
-                if (!Directory.Exists(dirName))
+                foreach (string dirName in dirNames)
                 {
-                    return false;
+                    if (!Directory.Exists(dirName))
+                    {
+                        return false;
+                    }
+                    
+                    if (!Directory.Exists(Path.Join(dirName, nyokaFolderName)))
+                    {
+                        return false;
+                    }
                 }
-                
-                if (!Directory.Exists(Path.Join(dirName, nyokaFolderName)))
-                {
-                    return false;
-                }
-            }
 
-            return true;
+                return true;
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException("Failed to check for necessary directories and files");
+            }
         }
         
         public static bool createCodeDataModelDirs(
             bool logExisting = false,
-            bool logCreated = false,
-            bool logError = true)
+            bool logCreated = false)
         {
-            bool successful = true;
-            
-            foreach (string dirName in dirNames)
+            try
             {
-                tryCreateDirIfNonExistent(
-                    dirName,
-                    logExisting,
-                    logCreated,
-                    logError
-                );
+                bool successful = true;
+                
+                foreach (string dirName in dirNames)
+                {
+                    tryCreateDirIfNonExistent(
+                        dirName,
+                        logExisting,
+                        logCreated
+                    );
 
-                tryCreateDirIfNonExistent(
-                    Path.Join(dirName, nyokaFolderName),
-                    logExisting,
-                    logCreated,
-                    logError
-                );
+                    tryCreateDirIfNonExistent(
+                        Path.Join(dirName, nyokaFolderName),
+                        logExisting,
+                        logCreated
+                    );
+                }
+
+                return successful;
             }
-
-            return successful;
+            catch (FSOpsException ex)
+            {
+                throw ex;
+            }
         }
 
         private static bool tryCreateDirIfNonExistent(
             string dirName,
             bool logExisting,
-            bool logCreated,
-            bool logError)
+            bool logCreated)
         {
-            if (Directory.Exists(dirName))
+            try
             {
-                if (logExisting)
+                if (Directory.Exists(dirName))
                 {
-                    CLIInterface.log($"Directory \"{dirName}\" already exists");
-                }
-                return true;
-            } 
-            else
-            {
-                try
+                    if (logExisting)
+                    {
+                        CLIInterface.logLine($"Directory \"{dirName}\" already exists");
+                    }
+                    return true;
+                } 
+                else
                 {
                     Directory.CreateDirectory(dirName);
                     
                     if (logCreated)
                     {
-                        CLIInterface.log($"Directory \"{dirName}\" created");
+                        CLIInterface.logLine($"Directory \"{dirName}\" created");
                     }
                     return true;
                 }
-                catch (IOException)
-                {
-                    if (logError)
-                    {
-                        CLIInterface.log($"Failed to create directory \"{dirName}\"");
-                    }
-                    return false;
-                }
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to create directory \"{dirName}\"");
             }
         }
 
         public static void removeResource(ResourceType resourceType, string resourceName)
         {
-            File.Delete(Path.Join(resourceType.ToString(), resourceName));
-            File.Delete(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+            try
+            {
+                File.Delete(Path.Join(resourceType.ToString(), resourceName));
+                File.Delete(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to remove {resourceType.ToString()} resource {resourceName}");
+            }
         }
         
         public static bool resourceExists(ResourceType resourceType, string resourceName)
         {
-            return File.Exists(Path.Join(resourceType.ToString(), resourceName));
+            try
+            {
+                return File.Exists(Path.Join(resourceType.ToString(), resourceName));
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to check file system for whether {resourceType.ToString()} resource {resourceName} exists");
+            }
         }
 
         public static IEnumerable<string> resourceNames(ResourceType resourceType)
         {
-            return new DirectoryInfo(resourceType.ToString()).EnumerateFiles().Select(file => file.Name);
+            try
+            {
+                return new DirectoryInfo(resourceType.ToString()).EnumerateFiles().Select(file => file.Name);
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to get list of {resourceType.ToString()} resources from file system");
+            }
         }
 
         public static FileStream createResourceFile(ResourceType resourceType, string resourceName)
         {
-            return File.Create(Path.Join(resourceType.ToString(), resourceName));
+            try
+            {
+                return File.Create(Path.Join(resourceType.ToString(), resourceName));
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to create file for {resourceType.ToString()} resource {resourceName}");
+            }
         }
 
         public static StreamWriter createResourceFileNyokaVersionFile(ResourceType resourceType, string resourceName)
         {
-            return File.CreateText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+            try
+            {
+                return File.CreateText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to create metadata file for {resourceType.ToString()} resource {resourceName}");
+            }
         }
 
         public static string getResourceVersion(ResourceType resourceType, string resourceName)
         {
-            return File.ReadAllText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
+            try
+            {
+                return File.ReadAllText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to read metadata file for {resourceType.ToString()} resource {resourceName}");
+            }
         }
 
         public static long getResourceSize(ResourceType resourceType, string resourceName)
         {
-            return new FileInfo(Path.Join(resourceType.ToString(), resourceName)).Length;
+            try
+            {
+                return new FileInfo(Path.Join(resourceType.ToString(), resourceName)).Length;
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to determine file size of file for {resourceType.ToString()} resource {resourceName}");
+            }
+        }
+
+        public static bool publishFileExists(string resourceName)
+        {
+            try
+            {
+                return File.Exists(resourceName);
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to check for existence of file {resourceName}");
+            }
         }
     }
 }
