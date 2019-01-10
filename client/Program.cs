@@ -7,7 +7,7 @@ using Constants;
 using CLIInterfaceNS;
 using System.Linq;
 
-namespace ny_cli
+namespace nyoka_cli
 {
     [Verb("init", HelpText = "Initialize code, data and model folders.")]
     class InitOptions 
@@ -17,9 +17,6 @@ namespace ny_cli
     [Verb("add", HelpText = "Add resource")]
     class AddOptions
     {
-        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
-        public ResourceType resourceType {get;set;}
-
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
@@ -37,8 +34,7 @@ namespace ny_cli
                         "Add a data resource",
                         new AddOptions
                         {
-                            resourceType = ResourceType.data,
-                            resourceName = "example_data_resource_name"
+                            resourceName = "example_data_resource_name.json"
                         }
                     )
                 };
@@ -49,9 +45,6 @@ namespace ny_cli
     [Verb("remove", HelpText = "Remove resource")]
     class RemoveOptions
     {
-        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
-        public ResourceType resourceType {get;set;}
-
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
@@ -67,8 +60,7 @@ namespace ny_cli
                         "Add a data resource",
                         new RemoveOptions
                         {
-                            resourceType = ResourceType.model,
-                            resourceName = "example_model_resource_name"
+                            resourceName = "example_model_resource_name.csv"
                         }
                     )
                 };
@@ -135,9 +127,6 @@ namespace ny_cli
     [Verb("dependencies", HelpText = "List dependencies of resource")]
     class DependenciesOptions
     {
-        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
-        public string resourceType {get;set;}
-
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
@@ -153,15 +142,14 @@ namespace ny_cli
                     new Example(
                         "List the dependencies of a locally downloaded code resource",
                         new DependenciesOptions {
-                            resourceType  = "code",
                             resourceName = "some_local_resource_name.py"
                         }
                     ),
                     new Example(
-                        "List the dependencies of a model resource on the server",
+                        "List the dependencies of a model resource",
                         new DependenciesOptions {
-                            resourceType = "model",
-                            resourceName = "name_of_server_model.pmml"
+                            resourceName = "name_of_server_model.pmml",
+                            version = "1.2.3",
                         }
                     )
                 };
@@ -169,41 +157,37 @@ namespace ny_cli
         }
     }
 
-    [Verb("pruneto", HelpText = "Prune the given resource type to the provided resources")]
-    class PruneToOptions
-    {
-        [Option("code", Separator=',', HelpText = "code resource(s) to keep, separated by commas")]
-        public IEnumerable<string> keepCode {get;set;}
+    // [Verb("pruneto", HelpText = "Prune the given resource type to the provided resources")]
+    // class PruneToOptions
+    // {
+    //     [Option("code", Separator=',', HelpText = "code resource(s) to keep, separated by commas")]
+    //     public IEnumerable<string> keepCode {get;set;}
 
-        [Option("model", Separator=',', HelpText = "model resource(s) to keep, separated by commas")]
-        public IEnumerable<string> keepModel {get;set;}
+    //     [Option("model", Separator=',', HelpText = "model resource(s) to keep, separated by commas")]
+    //     public IEnumerable<string> keepModel {get;set;}
 
-        [Option("data", Separator=',', HelpText = "data resource(s) to keep, separated by commas")]
-        public IEnumerable<string> keepData {get;set;}
+    //     [Option("data", Separator=',', HelpText = "data resource(s) to keep, separated by commas")]
+    //     public IEnumerable<string> keepData {get;set;}
 
-        public IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
-                {
-                    new Example("Keep a code resource and two model resources", new PruneToOptions {
-                        keepCode= new string[] {"some_code.py"},
-                        keepModel= new string[] {"model1.pmml", "model2.pmml"},
-                        keepData= new string[] {},
-                    }),
-                };
-            }
-        }
-    }
+    //     public IEnumerable<Example> Examples
+    //     {
+    //         get
+    //         {
+    //             return new List<Example>()
+    //             {
+    //                 new Example("Keep a code resource and two model resources", new PruneToOptions {
+    //                     keepCode= new string[] {"some_code.py"},
+    //                     keepModel= new string[] {"model1.pmml", "model2.pmml"},
+    //                     keepData= new string[] {},
+    //                 }),
+    //             };
+    //         }
+    //     }
+    // }
 
     [Verb("publish", HelpText = "Publish a resource to server")]
     class PublishOptions
     {
-        
-        [Value(0, Required = true, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
-        public string resourceType {get;set;}
-
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
@@ -225,13 +209,11 @@ namespace ny_cli
             {
                 return new List<Example>()
                 {
-                    new Example("Publish a code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
-                        resourceType = "code",
+                    new Example("Publish code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
                         resourceName = "code_file.ipynb",
                         version = "1.2.3",
                     }),
                     new Example("Publish model1.pmml version 10.2.3 with a data dependency called dataset.json, version 1.2.3", new PublishOptions {
-                        resourceType = "model",
                         resourceName = "model1.pmml",
                         version = "10.2.3",
                         dataDeps = new string[] {"dataset.json@1.2.3"},
@@ -250,7 +232,7 @@ namespace ny_cli
             {
             }
         }
-        
+
         private static ResourceType parseResourceType(string type)
         {
             if (type.ToLower() == "model") return ResourceType.model;
@@ -266,7 +248,7 @@ namespace ny_cli
                 settings.HelpWriter = System.Console.Error;
             });
 
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PruneToOptions, PublishOptions>(args)
+            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PublishOptions>(args)
                 .WithParsed<InitOptions>(opts => {
                     PackageManager.initDirectories();
                 })
@@ -290,14 +272,12 @@ namespace ny_cli
                 })
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
-                        opts.resourceType,
                         opts.resourceName,
                         opts.version
                     );
                 })
                 .WithParsed<RemoveOptions>(opts => {
                     PackageManager.removePackage(
-                        opts.resourceType,
                         opts.resourceName
                     );
                 })
@@ -320,43 +300,26 @@ namespace ny_cli
                     }
                 })
                 .WithParsed<DependenciesOptions>(opts => {
-                    try {
-                        ResourceType resourceType = parseResourceType(opts.resourceType);
-                        PackageManager.listDependencies(
-                            resourceType,
-                            opts.resourceName,
-                            opts.version
-                        );
-                    }
-                    catch (InvalidResourceTypeException)
-                    {
-                        CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
-                    }
-                })
-                .WithParsed<PruneToOptions>(opts => {
-                    PackageManager.pruneTo(
-                      opts.keepCode.ToList(),
-                      opts.keepData.ToList(),
-                      opts.keepModel.ToList()
+                    PackageManager.listDependencies(
+                        opts.resourceName,
+                        opts.version
                     );
                 })
+                // .WithParsed<PruneToOptions>(opts => {
+                //     PackageManager.pruneTo(
+                //       opts.keepCode.ToList(),
+                //       opts.keepData.ToList(),
+                //       opts.keepModel.ToList()
+                //     );
+                // })
                 .WithParsed<PublishOptions>(opts => {
-                    try
-                    {
-                        ResourceType resourceType = parseResourceType(opts.resourceType);
-                        PackageManager.publishResource(
-                            resourceType,
-                            opts.resourceName,
-                            opts.version,
-                            opts.codeDeps.ToList(),
-                            opts.dataDeps.ToList(),
-                            opts.modelDeps.ToList()
-                        );
-                    }
-                    catch (InvalidResourceTypeException)
-                    {
-                        CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
-                    }
+                    PackageManager.publishResource(
+                        opts.resourceName,
+                        opts.version,
+                        opts.codeDeps.ToList(),
+                        opts.dataDeps.ToList(),
+                        opts.modelDeps.ToList()
+                    );
                 });
         }
     }

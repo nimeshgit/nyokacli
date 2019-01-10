@@ -5,6 +5,7 @@ using NetworkUtilsNS;
 using System.IO;
 using System.Linq;
 using InfoTransferContainers;
+using FileTypeInferenceNS;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
@@ -13,7 +14,16 @@ namespace PackageManagerNS
 {
     public static class PackageManager
     {
-        private static string bytesToString(long bytes) {
+        private static ResourceType inferResourceType(string resourceName)
+        {
+            if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.code;
+            if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.data;
+            if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.model;
+            throw new FileTypeInference.FileTypeInferenceError("Could not infer resource type from extension of {resourceName}");
+        }
+        
+        private static string bytesToString(long bytes)
+        {
             const long KSize = 1024;
             const long MSize = 1048576;
             const long GSize = 1073741824;
@@ -21,24 +31,35 @@ namespace PackageManagerNS
 
             long unit;
             string suffix;
-            if (bytes < KSize) {
+            if (bytes < KSize)
+            {
                 unit = 1;
                 suffix = "B";
-            } else if (bytes < MSize) {
+            }
+            else if (bytes < MSize)
+            {
                 unit = KSize;
                 suffix = "KB";
-            } else if (bytes < GSize) {
+            }
+            else if (bytes < GSize)
+            {
                 unit = MSize;
                 suffix = "MB";
-            } else if (bytes < TSize) {
+            }
+            else if (bytes < TSize)
+            {
                 unit = GSize;
                 suffix = "GB";
-            } else {
+            }
+            else
+            {
                 unit = TSize;
                 suffix = "TB";
             }
 
             float dividedByUnits = bytes/((float)unit);
+
+            // represent either as integer or to two decimal places
             string numToString = dividedByUnits%1==0 ? dividedByUnits.ToString() : string.Format("{0:0.00}", dividedByUnits);
 
             return $"{numToString} {suffix}";
@@ -81,13 +102,46 @@ namespace PackageManagerNS
             }
         }
         
-        public static void addPackage(ResourceType resourceType, string resourceName, string version)
+        public static void addPackage(string resourceName, string version)
         {
             try
             {
-                FSOps.createCodeDataModelDirs();
-                CLIInterface.logLine($"Adding {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
-                
+                ResourceType resourceType = inferResourceType(resourceName);
+
+                // check if the resource is available from the server
+                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                if (!availableResources.ContainsKey(resourceName))
+                {
+                    CLIInterface.logError($"No resource called {resourceName} is available from the server.");
+                    return;
+                }
+
+                // check if the requested version is available from the server
+                var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                if (!versionInfo.versions.Contains(version))
+                {
+                    CLIInterface.logError($"There is no version {version} available of resource {resourceName}.");
+                    return;
+                }
+
+                // check if nyoka directories exists
+                if (!FSOps.hasNecessaryDirs())
+                {
+                    bool createDirs = CLIInterface.askYesOrNo(
+                        "Resource directories are not present in this directory. Create them now?"
+                    );
+
+                    if (createDirs)
+                    {
+                        FSOps.createCodeDataModelDirs(logCreated: true);
+                    }
+                    else
+                    {
+                        CLIInterface.logLine("Package add aborted");
+                    }
+                }
+
+                // check if the resource is already present
                 if (FSOps.resourceExists(resourceType, resourceName))
                 {
                     string presentVersion = FSOps.getResourceVersion(resourceType, resourceName);
@@ -112,7 +166,7 @@ namespace PackageManagerNS
                         }
                         else
                         {
-                            CLIInterface.logLine("Aborting package add.");
+                            CLIInterface.logLine("Aborting resource add.");
                             return;
                         }
                     }
@@ -153,9 +207,9 @@ namespace PackageManagerNS
                         }
                     }
 
-                    CLIInterface.logLine($"Dependencies of {resourceName}:");
+                    CLIInterface.logLine($"Resource {resourceName} has these dependencies:");
                     CLIInterface.logTable(table);
-                    downloadDependencies = CLIInterface.askYesOrNo("Download these packages?");
+                    downloadDependencies = CLIInterface.askYesOrNo("Download these dependencies?");
 
                     if (downloadDependencies) CLIInterface.logLine("Downloading dependencies");
                     else CLIInterface.logLine("Skipping downloading dependencies.");
@@ -172,6 +226,7 @@ namespace PackageManagerNS
                     }
                 }
 
+                CLIInterface.logLine($"Adding {resourceType.ToString()} resource \"{resourceName}\"");
                 downloadPackage(resourceType, resourceName, version);
             }
             catch (FSOps.FSOpsException ex)
@@ -182,12 +237,17 @@ namespace PackageManagerNS
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
             }
+            catch (FileTypeInference.FileTypeInferenceError ex)
+            {
+                CLIInterface.logError($"Argument Error: {ex.Message}");
+            }
         }
 
-        public static void removePackage(ResourceType resourceType, string resourceName)
+        public static void removePackage(string resourceName)
         {
             try
             {
+                ResourceType resourceType = inferResourceType(resourceName);
                 FSOps.createCodeDataModelDirs();
 
                 CLIInterface.logLine($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
@@ -204,13 +264,17 @@ namespace PackageManagerNS
             {
                 CLIInterface.logError($"File System Error: " + ex.Message);
             }
+            catch (FileTypeInference.FileTypeInferenceError ex)
+            {
+                CLIInterface.logError($"Argument Error: {ex.Message}");
+            }
         }
 
         public static void listResources(ResourceType? listType)
         {
             try
             {
-                if (!FSOps.hasNecessaryDirsAndFiles())
+                if (!FSOps.hasNecessaryDirs())
                 {
                     CLIInterface.logError($"Missing resource directories or files. Try running {ConstStrings.APPLICATION_ALIAS} init?");
                     return;
@@ -251,10 +315,12 @@ namespace PackageManagerNS
             }
         }
 
-        public static void listDependencies(ResourceType resourceType, string resourceName, string version)
+        public static void listDependencies(string resourceName, string version)
         {
             try
             {
+                ResourceType resourceType = inferResourceType(resourceName);
+                
                 if (version == null)
                 {
                     if (FSOps.resourceExists(resourceType, resourceName))
@@ -271,8 +337,9 @@ namespace PackageManagerNS
                 ResourceDependencyInfoContainer deps = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
-                    {"Type", 7},
-                    {"Name Of Dependency", 20},
+                    {"Resource Type", 13},
+                    {"Dep. Type", 9},
+                    {"Dependency Name", 20},
                     {"Version", 15},
                     {"Size", 10},
                 };
@@ -295,6 +362,7 @@ namespace PackageManagerNS
                     {
                         table.addRow(
                             dependenciesType.ToString(),
+                            dependencyDescription.isDirectDependency ? "direct" : "indirect",
                             dependencyName,
                             dependencyDescription.versionStr,
                             bytesToString(availableResourcesInfo[dependenciesType][dependencyName].byteCount)
@@ -311,6 +379,10 @@ namespace PackageManagerNS
             catch (NetworkUtils.NetworkUtilsException ex)
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
+            }
+            catch (FileTypeInference.FileTypeInferenceError ex)
+            {
+                CLIInterface.logError($"Argument Error: {ex.Message}");
             }
         }
 
@@ -469,7 +541,7 @@ namespace PackageManagerNS
 
                 if (!successful)
                 {
-                    CLIInterface.logError("Failed to remove some packages.");
+                    CLIInterface.logError("Failed to remove some resources.");
                 }
             }
             catch (FSOps.FSOpsException ex)
@@ -483,7 +555,6 @@ namespace PackageManagerNS
         }
         
         public static void publishResource(
-            ResourceType resourceType,
             string resourceName,
             string publishVersion,
             List<string> codeDeps,
@@ -492,6 +563,8 @@ namespace PackageManagerNS
         {
             try
             {
+                ResourceType resourceType = inferResourceType(resourceName);
+                
                 PublishDepsInfoContainer publishDepsInfo = new PublishDepsInfoContainer();
 
                 (Dictionary<string, PublishDepsInfoContainer.PublishDepDescription>, List<string>)[] publishParsePairs = {
@@ -508,7 +581,7 @@ namespace PackageManagerNS
                         
                         if (splitByAtSign.Length != 2)
                         {
-                            CLIInterface.logError("Invalid resource name {resourceString}. It should be formatted like this: \"[resource name]@[version number]\"");
+                            CLIInterface.logError($"Invalid resource name {resourceString}. It should be formatted like this: \"[resource name]@[version number]\"");
                             return;
                         }
                         string depName = splitByAtSign[0];
@@ -527,7 +600,7 @@ namespace PackageManagerNS
                 // If a file to publish with the given name can't be found
                 if (!FSOps.checkPublishFileExists(resourceName))
                 {
-                    CLIInterface.logError("Resource with name {resourceName} not found in current directory.");
+                    CLIInterface.logError($"Resource with name {resourceName} not found in current directory.");
                     return;
                 }
 
@@ -576,6 +649,10 @@ namespace PackageManagerNS
             catch (NetworkUtils.NetworkUtilsException ex)
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
+            }
+            catch (FileTypeInference.FileTypeInferenceError ex)
+            {
+                CLIInterface.logError($"Argument Error: {ex.Message}");
             }
         }
     }

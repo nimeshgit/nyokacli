@@ -24,7 +24,7 @@ namespace FSOpsNS
         private static readonly string nyokaVersionExtension = ".version";
         private static readonly string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
         
-        public static bool hasNecessaryDirsAndFiles()
+        public static bool hasNecessaryDirs()
         {
             try
             {
