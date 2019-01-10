@@ -20,7 +20,7 @@ namespace nyoka_cli
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
-        [Value(2, Required = true, HelpText = "Resource version")]
+        [Value(2, Required = false, HelpText = "Resource version")]
         public string version {get;set;}
         
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
@@ -191,8 +191,8 @@ namespace nyoka_cli
         [Value(1, Required = true, HelpText = "Resource name")]
         public string resourceName {get;set;}
 
-        [Value(2, Required = false, HelpText = "Resource version")]
-        public string version {get;set;} = null;
+        [Value(2, Required = true, HelpText = "Resource version")]
+        public string version {get;set;}
 
         [Option("codedeps", Separator=',', HelpText = "code depedencies, separated by commas. Example: code.py@1.2.3")]
         public IEnumerable<string> codeDeps {get;set;}
@@ -273,7 +273,7 @@ namespace nyoka_cli
                 .WithParsed<AddOptions>(opts => {
                     PackageManager.addPackage(
                         opts.resourceName,
-                        opts.version
+                        opts.version // possible null
                     );
                 })
                 .WithParsed<RemoveOptions>(opts => {

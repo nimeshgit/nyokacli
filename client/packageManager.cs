@@ -116,12 +116,20 @@ namespace PackageManagerNS
                     return;
                 }
 
-                // check if the requested version is available from the server
-                var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                if (!versionInfo.versions.Contains(version))
+                if (version == null)
                 {
-                    CLIInterface.logError($"There is no version {version} available of resource {resourceName}.");
-                    return;
+                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    version = versionInfo.latestVersion;
+                }
+                else
+                {
+                    // check if the requested version is available from the server
+                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    if (!versionInfo.versions.Contains(version))
+                    {
+                        CLIInterface.logError($"There is no version {version} available of resource {resourceName}.");
+                        return;
+                    }
                 }
 
                 // check if nyoka directories exists
@@ -156,8 +164,8 @@ namespace PackageManagerNS
                     else
                     {
                         bool continueAnyways = CLIInterface.askYesOrNo(
-                            "{resourceType.ToString()} resource {resourceName} is already present" +
-                            "at version {presentVersion}. Delete and replace with version {version}?"
+                            $"{resourceType.ToString()} resource {resourceName} is already present " +
+                            $"at version {presentVersion}. Delete and replace with version {version}?"
                         );
 
                         if (continueAnyways)
@@ -613,8 +621,8 @@ namespace PackageManagerNS
                     if (versionsInfo.versions.Contains(publishVersion))
                     {
                         bool continueAnyways = CLIInterface.askYesOrNo(
-                            "Version {publishVersion} of {resourceType.ToString()} resource" +
-                            "{resourceName} already exists on server. Overwrite?"
+                            $"Version {publishVersion} of {resourceType.ToString()} resource " +
+                            $"{resourceName} already exists on server. Overwrite?"
                         );
 
                         if (!continueAnyways)
