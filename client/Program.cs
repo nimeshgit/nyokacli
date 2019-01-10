@@ -18,11 +18,8 @@ namespace nyoka_cli
     [Verb("add", HelpText = "Add resource")]
     class AddOptions
     {
-        [Value(1, Required = true, HelpText = "Resource name")]
-        public string resourceName {get;set;}
-
-        [Value(2, Required = false, HelpText = "Resource version")]
-        public string version {get;set;}
+        [Value(1, Required = true, HelpText = "Resource name, possibly with version specified (ex: resource.py or resource.py@1.2.3)")]
+        public string resourceStr {get;set;}
         
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
         public static IEnumerable<Example> Examples
@@ -35,7 +32,7 @@ namespace nyoka_cli
                         "Add a data resource",
                         new AddOptions
                         {
-                            resourceName = "example_data_resource_name.json"
+                            resourceStr = "example_data_resource_name.json"
                         }
                     )
                 };
@@ -46,8 +43,8 @@ namespace nyoka_cli
     [Verb("remove", HelpText = "Remove resource")]
     class RemoveOptions
     {
-        [Value(1, Required = true, HelpText = "Resource name")]
-        public string resourceName {get;set;}
+        [Value(1, Required = true, HelpText = "Resource name, possibly with version specified (ex: resource.py or resource.py@1.2.3)")]
+        public string resourceStr {get;set;}
 
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
@@ -58,10 +55,10 @@ namespace nyoka_cli
                 return new List<Example>()
                 {
                     new Example(
-                        "Add a data resource",
+                        "Remove a data resource",
                         new RemoveOptions
                         {
-                            resourceName = "example_model_resource_name.csv"
+                            resourceStr = "example_model_resource_name.csv"
                         }
                     )
                 };
@@ -189,20 +186,11 @@ namespace nyoka_cli
     [Verb("publish", HelpText = "Publish a resource to server")]
     class PublishOptions
     {
-        [Value(1, Required = true, HelpText = "Resource name")]
-        public string resourceName {get;set;}
+        [Value(1, Required = true, HelpText = "Resource name with version. (ex: dep.py@12.3.4 or data.json@3.33.2")]
+        public string resourceStr {get;set;}
 
-        [Value(2, Required = true, HelpText = "Resource version")]
-        public string version {get;set;}
-
-        [Option("codedeps", Separator=',', HelpText = "code depedencies, separated by commas. Example: code.py@1.2.3")]
-        public IEnumerable<string> codeDeps {get;set;}
-
-        [Option("modeldeps", Separator=',', HelpText = "model depedencies, separated by commas. Example: model39.pmml@13.4.2")]
-        public IEnumerable<string> modelDeps {get;set;}
-
-        [Option("datadeps", Separator=',', HelpText = "data depedencies, separated by commas. Example: dataset.csv@1.0.0")]
-        public IEnumerable<string> dataDeps {get;set;}
+        [Option("deps", HelpText = "Dependencies of this package, separated by spaces. Example: code.py@1.2.3 data.csv@1.0.0")]
+        public IEnumerable<string> deps {get;set;}
 
         public IEnumerable<Example> Examples
         {
@@ -211,13 +199,11 @@ namespace nyoka_cli
                 return new List<Example>()
                 {
                     new Example("Publish code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
-                        resourceName = "code_file.ipynb",
-                        version = "1.2.3",
+                        resourceStr = "code_file.ipynb@1.2.3",
                     }),
                     new Example("Publish model1.pmml version 10.2.3 with a data dependency called dataset.json, version 1.2.3", new PublishOptions {
-                        resourceName = "model1.pmml",
-                        version = "10.2.3",
-                        dataDeps = new string[] {"dataset.json@1.2.3"},
+                        resourceStr = "model1.pmml@10.2.3",
+                        deps = new string[] {"dataset.json@1.2.3"},
                     }),
                 };
             }
@@ -255,6 +241,68 @@ namespace nyoka_cli
                 throw new ArgumentProcessException($"Could not infer resource type from extension of {resourceName}");
             }
         }
+
+        private static PackageManager.ResourceIdentifier generateResourceIdentifier(string resourceStr)
+        {
+            string[] splitByAt = resourceStr.Split('@');
+
+            if (splitByAt.Length == 1)
+            {
+                return new PackageManager.ResourceIdentifier(
+                    resourceStr,
+                    inferResourceTypeFromResourceName(resourceStr)
+                );
+            }
+            else if (splitByAt.Length == 2)
+            {
+                string version = splitByAt[1];
+
+                // validate version string
+                string[] versionSections = version.Split('.');
+                foreach (string section in versionSections)
+                {
+                    if (section.Trim() != section)
+                    {
+                        throw new ArgumentProcessException("Version cannot contain spaces");
+                    }
+                    // if this is section empty
+                    if (section.Length == 0)
+                    {
+                        // if this is also the only section
+                        if (versionSections.Length == 1)
+                        {
+                            throw new ArgumentProcessException($"\"{resourceStr}\" is missing version");
+                        }
+                        else
+                        {
+                            throw new ArgumentProcessException(
+                                $"Invalid version \"{version}\" in \"{resourceStr}\": Version should be " +
+                                "series of numbers separated by periods, like 1.2.3 or 333.3.20"
+                            );
+                        }
+                    }
+                    foreach (char ch in section)
+                    {
+                        if (!"1234567890".Contains(ch))
+                        {
+                            throw new ArgumentProcessException($"Invalid version character \"{ch}\" in {resourceStr}");
+                        }
+                    }
+                }
+                
+                return new PackageManager.ResourceIdentifier(
+                    splitByAt[0],
+                    inferResourceTypeFromResourceName(splitByAt[0]),
+                    version
+                );
+            }
+            else
+            {
+                throw new ArgumentProcessException(
+                    $"Could not process \"{resourceStr}\": Only one @ symbol is permitted in a resource name"
+                );
+            }
+        }
         
         static void Main(string[] args)
         {
@@ -289,9 +337,7 @@ namespace nyoka_cli
                     try
                     {
                         PackageManager.addPackage(
-                            inferResourceTypeFromResourceName(opts.resourceName),
-                            opts.resourceName,
-                            opts.version // possible null
+                            generateResourceIdentifier(opts.resourceStr)
                         );
                     }
                     catch (ArgumentProcessException ex)
@@ -303,8 +349,7 @@ namespace nyoka_cli
                     try
                     {
                         PackageManager.removePackage(
-                            inferResourceTypeFromResourceName(opts.resourceName),
-                            opts.resourceName
+                            generateResourceIdentifier(opts.resourceStr)
                         );
                     }
                     catch (ArgumentProcessException ex)
@@ -355,12 +400,8 @@ namespace nyoka_cli
                     try
                     {
                         PackageManager.publishResource(
-                            inferResourceTypeFromResourceName(opts.resourceName),
-                            opts.resourceName,
-                            opts.version,
-                            opts.codeDeps.ToList(),
-                            opts.dataDeps.ToList(),
-                            opts.modelDeps.ToList()
+                            generateResourceIdentifier(opts.resourceStr),
+                            opts.deps.Select(depStr => generateResourceIdentifier(depStr))
                         );
                     }
                     catch (ArgumentProcessException ex)

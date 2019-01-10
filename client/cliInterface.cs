@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+// @TODO implement progress bars?
 namespace CLIInterfaceNS
 {
     public static class CLIInterface
@@ -10,7 +11,8 @@ namespace CLIInterfaceNS
         private static System.ConsoleColor errorForegroundColor = System.ConsoleColor.Black;
         private static System.ConsoleColor tableHeaderColor = System.ConsoleColor.Yellow;
         private static System.ConsoleColor tableFrameColor = System.ConsoleColor.White;
-        
+
+        // Inherits from IEnumerable to enable object initializer
         public class PrintTable : System.Collections.IEnumerable
         {
             public class ColumnCountException : System.Exception
@@ -28,14 +30,17 @@ namespace CLIInterfaceNS
             
             public PrintTable()
             {
+                // empty
             }
             
+            // To enable object initializer
             public void Add(string columnName, int columnWidth)
             {
                 columnNames.Add(columnName);
                 columnWidths.Add(columnWidth);
             }
             
+            // To enable object initializer
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
             {
                 yield break;

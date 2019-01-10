@@ -13,6 +13,24 @@ namespace PackageManagerNS
 {
     public static class PackageManager
     {
+        public class ResourceIdentifier
+        {
+            public string resourceName;
+            public string version;
+            public ResourceType resourceType;
+            public ResourceIdentifier(string resourceName, ResourceType resourceType)
+            {
+                this.resourceName = resourceName;
+                this.resourceType = resourceType;
+                this.version = null;
+            }
+            public ResourceIdentifier(string resourceName, ResourceType resourceType, string version)
+            {
+                this.resourceName = resourceName;
+                this.resourceType = resourceType;
+                this.version = version;
+            }
+        }
         private static string bytesToString(long bytes)
         {
             const long KSize = 1024;
@@ -93,10 +111,13 @@ namespace PackageManagerNS
             }
         }
         
-        public static void addPackage(ResourceType resourceType, string resourceName, string version)
+        public static void addPackage(ResourceIdentifier resourceDescription)
         {
             try
             {
+                ResourceType resourceType = resourceDescription.resourceType;
+                string resourceName = resourceDescription.resourceName;
+                
                 // check if the resource is available from the server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
                 if (!availableResources.ContainsKey(resourceName))
@@ -105,6 +126,8 @@ namespace PackageManagerNS
                     return;
                 }
 
+                string version = resourceDescription.version; // possible null
+                
                 if (version == null)
                 {
                     var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
@@ -236,10 +259,12 @@ namespace PackageManagerNS
             }
         }
 
-        public static void removePackage(ResourceType resourceType, string resourceName)
+        public static void removePackage(ResourceIdentifier resourceDescription)
         {
             try
             {
+                string resourceName = resourceDescription.resourceName;
+                ResourceType resourceType = resourceDescription.resourceType;
                 FSOps.createCodeDataModelDirs();
 
                 CLIInterface.logLine($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
@@ -247,6 +272,15 @@ namespace PackageManagerNS
                 {
                     CLIInterface.logError($"{resourceType} resource \"{resourceName}\" does not exist");
                     return;
+                }
+
+                if (resourceDescription.version != null)
+                {
+                    string localVersion = FSOps.getResourceVersion(resourceType, resourceName);
+                    if (localVersion != resourceDescription.version)
+                    {
+                        CLIInterface.logError($"Could not remove version {resourceDescription.version} since present version is {localVersion}");
+                    }
                 }
 
                 FSOps.removeResource(resourceType, resourceName);
@@ -432,39 +466,35 @@ namespace PackageManagerNS
             }
         }
 
-        public static void publishResource(
-            ResourceType resourceType,
-            string resourceName,
-            string publishVersion,
-            List<string> codeDeps,
-            List<string> dataDeps,
-            List<string> modelDeps)
+        public static void publishResource(ResourceIdentifier resourceDescription, IEnumerable<ResourceIdentifier> deps)
         {
             try
             {
                 PublishDepsInfoContainer publishDepsInfo = new PublishDepsInfoContainer();
 
-                (Dictionary<string, PublishDepsInfoContainer.PublishDepDescription>, List<string>)[] publishParsePairs = {
-                    (publishDepsInfo.codeDeps, codeDeps),
-                    (publishDepsInfo.dataDeps, dataDeps),
-                    (publishDepsInfo.modelDeps, modelDeps),
-                };
-
-                foreach (var (publishDepDict, resourceStringList) in publishParsePairs)
+                foreach (ResourceIdentifier depDescription in deps)
                 {
-                    foreach (string resourceString in resourceStringList)
+                    if (depDescription.version == null)
                     {
-                        string[] splitByAtSign = resourceString.Split("@");
-                        
-                        if (splitByAtSign.Length != 2)
-                        {
-                            CLIInterface.logError($"Invalid resource name {resourceString}. It should be formatted like this: \"[resource name]@[version number]\"");
-                            return;
-                        }
-                        string depName = splitByAtSign[0];
-                        string depVersion = splitByAtSign[1];
-                        
-                        publishDepDict[depName] = new PublishDepsInfoContainer.PublishDepDescription(depVersion);
+                        CLIInterface.logError(
+                            "The versions of dependencies must be supplied. For example, " +
+                            "\"dependency.csv\" does not include version, \"dependency.csv@1.2.3\" does."
+                        );
+                        return;
+                    }
+                    
+                    var publishDepDescription = new PublishDepsInfoContainer.PublishDepDescription(depDescription.version);
+                    if (depDescription.resourceType == ResourceType.code)
+                    {
+                        publishDepsInfo.codeDeps[depDescription.resourceName] = publishDepDescription;
+                    }
+                    else if (depDescription.resourceType == ResourceType.data)
+                    {
+                        publishDepsInfo.dataDeps[depDescription.resourceName] = publishDepDescription;
+                    }
+                    else if (depDescription.resourceType == ResourceType.model)
+                    {
+                        publishDepsInfo.modelDeps[depDescription.resourceName] = publishDepDescription;
                     }
                 }
 
@@ -473,6 +503,20 @@ namespace PackageManagerNS
                     { ResourceType.data, NetworkUtils.getAvailableResources(ResourceType.data) },
                     { ResourceType.model, NetworkUtils.getAvailableResources(ResourceType.model) },
                 };
+
+                string resourceName = resourceDescription.resourceName;
+                ResourceType resourceType = resourceDescription.resourceType;
+                string publishVersion = resourceDescription.version;
+
+                // check that user has provided version to publish file as
+                if (publishVersion == null)
+                {
+                    CLIInterface.logError(
+                        "Version number must be provided when publishing a file. " +
+                        "Example: In \"publish asdf.py@1.2.3\", asdf.py would be the file name and 1.2.3 would be the version."
+                    );
+                    return;
+                }
 
                 // If a file to publish with the given name can't be found
                 if (!FSOps.checkPublishFileExists(resourceName))
