@@ -5,7 +5,6 @@ using NetworkUtilsNS;
 using System.IO;
 using System.Linq;
 using InfoTransferContainers;
-using FileTypeInferenceNS;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
@@ -14,14 +13,6 @@ namespace PackageManagerNS
 {
     public static class PackageManager
     {
-        private static ResourceType inferResourceType(string resourceName)
-        {
-            if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.code;
-            if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.data;
-            if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.model;
-            throw new FileTypeInference.FileTypeInferenceError("Could not infer resource type from extension of {resourceName}");
-        }
-        
         private static string bytesToString(long bytes)
         {
             const long KSize = 1024;
@@ -102,12 +93,10 @@ namespace PackageManagerNS
             }
         }
         
-        public static void addPackage(string resourceName, string version)
+        public static void addPackage(ResourceType resourceType, string resourceName, string version)
         {
             try
             {
-                ResourceType resourceType = inferResourceType(resourceName);
-
                 // check if the resource is available from the server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
                 if (!availableResources.ContainsKey(resourceName))
@@ -245,17 +234,12 @@ namespace PackageManagerNS
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
             }
-            catch (FileTypeInference.FileTypeInferenceError ex)
-            {
-                CLIInterface.logError($"Argument Error: {ex.Message}");
-            }
         }
 
-        public static void removePackage(string resourceName)
+        public static void removePackage(ResourceType resourceType, string resourceName)
         {
             try
             {
-                ResourceType resourceType = inferResourceType(resourceName);
                 FSOps.createCodeDataModelDirs();
 
                 CLIInterface.logLine($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
@@ -271,10 +255,6 @@ namespace PackageManagerNS
             catch (FSOps.FSOpsException ex)
             {
                 CLIInterface.logError($"File System Error: " + ex.Message);
-            }
-            catch (FileTypeInference.FileTypeInferenceError ex)
-            {
-                CLIInterface.logError($"Argument Error: {ex.Message}");
             }
         }
 
@@ -323,12 +303,18 @@ namespace PackageManagerNS
             }
         }
 
-        public static void listDependencies(string resourceName, string version)
+        public static void listDependencies(ResourceType resourceType, string resourceName, string version)
         {
             try
             {
-                ResourceType resourceType = inferResourceType(resourceName);
-                
+                // check if this resource exists on server
+                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                if (!availableResources.ContainsKey(resourceName))
+                {
+                    CLIInterface.logError($"{resourceType.ToString()} resource {resourceName} could not be found on server");
+                    return;
+                }
+
                 if (version == null)
                 {
                     if (FSOps.resourceExists(resourceType, resourceName))
@@ -337,10 +323,21 @@ namespace PackageManagerNS
                     }
                     else
                     {
-                        CLIInterface.logError("Provide version number for resources not currently downloaded");
-                        return;
+                        var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                        version = versionInfo.latestVersion;
                     }
                 }
+                // check if user-specified version exists on the server at the given version
+                else
+                {
+                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    if (!versionInfo.versions.Contains(version))
+                    {
+                        CLIInterface.logError("Server does not report having a version \"{version}\" available for {resourceName}");
+                    }
+                }
+
+                CLIInterface.logLine($"Showing dependencies of {resourceName}, version {version}");
                 
                 ResourceDependencyInfoContainer deps = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
 
@@ -387,10 +384,6 @@ namespace PackageManagerNS
             catch (NetworkUtils.NetworkUtilsException ex)
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
-            }
-            catch (FileTypeInference.FileTypeInferenceError ex)
-            {
-                CLIInterface.logError($"Argument Error: {ex.Message}");
             }
         }
 
@@ -439,130 +432,8 @@ namespace PackageManagerNS
             }
         }
 
-        private static (ResourceType, string) nextResourceToInvestigate(Dictionary<ResourceType, List<string>> investigateResourcesByType)
-        {
-            foreach (var (resourceType, uninvestigatedNames) in investigateResourcesByType.Select(x => (x.Key, x.Value)))
-            {
-                if (uninvestigatedNames.Count == 0) continue;
-                
-                string resourceName = uninvestigatedNames.Last();
-                uninvestigatedNames.RemoveAt(uninvestigatedNames.Count - 1);
-                
-                return (resourceType, resourceName);
-            }
-            
-            throw new System.InvalidOperationException(); // @QUESTION is this an appropriate exception?
-        }
-
-        private static void addDependenciesToInvestigateDict(Dictionary<ResourceType, List<string>> investigateResourcesByType, ResourceDependencyInfoContainer infoContainer)
-        {
-            var dependencyDescriptionsByResourceType = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
-                { ResourceType.code, infoContainer.codeDeps },
-                { ResourceType.data, infoContainer.dataDeps },
-                { ResourceType.model, infoContainer.modelDeps },
-            };
-
-            foreach (var (resourceType, dependencyDescriptionsDict) in dependencyDescriptionsByResourceType.Select(x => (x.Key, x.Value)))
-            {
-                foreach (string resourceName in dependencyDescriptionsDict.Keys)
-                {
-                    if (!investigateResourcesByType[resourceType].Contains(resourceName))
-                    {
-                        investigateResourcesByType[resourceType].Add(resourceName);
-                    }
-                }
-            }
-        }
-
-        public static void pruneTo(List<string> pruneToCode, List<string> pruneToData, List<string> pruneToModel)
-        {
-            try
-            {
-                var pruneToArgs = new Dictionary<ResourceType, List<string>> {
-                    { ResourceType.code, pruneToCode },
-                    { ResourceType.data, pruneToData },
-                    { ResourceType.model, pruneToModel },
-                };
-                var resourcesToKeep = new Dictionary<ResourceType, List<string>> {
-                    { ResourceType.code, pruneToCode },
-                    { ResourceType.data, pruneToData },
-                    { ResourceType.model, pruneToModel },
-                };
-
-                foreach (var (pruneResourceType, pruneToNames) in pruneToArgs.Select(x => (x.Key, x.Value)))
-                {
-                    foreach (string pruneToName in pruneToNames)
-                    {
-                        if (!FSOps.resourceExists(pruneResourceType, pruneToName))
-                        {
-                            CLIInterface.logLine($"Skipping missing {pruneResourceType.ToString()} resource {pruneToName}");
-                            continue;
-                        }
-                        
-                        string version = FSOps.getResourceVersion(pruneResourceType, pruneToName);
-
-                        ResourceDependencyInfoContainer infoContainer = NetworkUtils.getResourceDependencies(pruneResourceType, pruneToName, version);
-
-                        var mergeDependencies = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
-                            { ResourceType.code, infoContainer.codeDeps },
-                            { ResourceType.data, infoContainer.dataDeps },
-                            { ResourceType.model, infoContainer.modelDeps },
-                        };
-
-                        foreach (var (mergeDepResourceType, mergeDepDict) in mergeDependencies.Select(x => (x.Key, x.Value)))
-                        {
-                            // @TODO take into account versions?
-                            foreach (var (mergeDepName, mergeDepDescription) in mergeDepDict.Select(x => (x.Key, x.Value)))
-                            {
-                                if (!resourcesToKeep[mergeDepResourceType].Contains(mergeDepName))
-                                {
-                                    resourcesToKeep[mergeDepResourceType].Add(mergeDepName);
-                                }
-                            }
-                        }
-                    }
-                }
-                
-
-                var presentResources = new Dictionary<ResourceType, IEnumerable<string>> {
-                    { ResourceType.code, FSOps.resourceNames(ResourceType.code) },
-                    { ResourceType.data, FSOps.resourceNames(ResourceType.data) },
-                    { ResourceType.model, FSOps.resourceNames(ResourceType.model) },
-                };
-
-                bool successful = true;
-                foreach (var (resourceType, presentResourceNameList) in presentResources.Select(x => (x.Key, x.Value)))
-                {
-                    foreach (string presentResourceName in presentResourceNameList)
-                    {
-                        if (resourcesToKeep[resourceType].Contains(presentResourceName))
-                        {
-                            CLIInterface.logLine($"Keeping {resourceType.ToString()} resource \"{presentResourceName}\"");
-                        }
-                        else
-                        {
-                            FSOps.removeResource(resourceType, presentResourceName);
-                            CLIInterface.logLine($"Removed {resourceType.ToString()} resource {presentResourceName}");
-                        }
-                    }
-                }
-
-                if (!successful)
-                {
-                    CLIInterface.logError("Failed to remove some resources.");
-                }
-            }
-            catch (FSOps.FSOpsException ex)
-            {
-                CLIInterface.logError($"File System Error: " + ex.Message);
-            }
-            catch (NetworkUtils.NetworkUtilsException ex)
-            {
-                CLIInterface.logError($"Network Error: {ex.Message}");
-            }
-        }
-        
         public static void publishResource(
+            ResourceType resourceType,
             string resourceName,
             string publishVersion,
             List<string> codeDeps,
@@ -571,8 +442,6 @@ namespace PackageManagerNS
         {
             try
             {
-                ResourceType resourceType = inferResourceType(resourceName);
-                
                 PublishDepsInfoContainer publishDepsInfo = new PublishDepsInfoContainer();
 
                 (Dictionary<string, PublishDepsInfoContainer.PublishDepDescription>, List<string>)[] publishParsePairs = {
@@ -657,10 +526,6 @@ namespace PackageManagerNS
             catch (NetworkUtils.NetworkUtilsException ex)
             {
                 CLIInterface.logError($"Network Error: {ex.Message}");
-            }
-            catch (FileTypeInference.FileTypeInferenceError ex)
-            {
-                CLIInterface.logError($"Argument Error: {ex.Message}");
             }
         }
     }

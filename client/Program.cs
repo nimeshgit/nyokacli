@@ -6,6 +6,7 @@ using CommandLine.Text;
 using Constants;
 using CLIInterfaceNS;
 using System.Linq;
+using FileTypeInferenceNS;
 
 namespace nyoka_cli
 {
@@ -225,9 +226,9 @@ namespace nyoka_cli
 
     class Program
     {
-        internal class InvalidResourceTypeException : System.Exception
+        internal class ArgumentProcessException : System.Exception
         {
-            public InvalidResourceTypeException(string mssg)
+            public ArgumentProcessException(string mssg)
             : base (mssg)
             {
             }
@@ -238,7 +239,21 @@ namespace nyoka_cli
             if (type.ToLower() == "model") return ResourceType.model;
             else if (type.ToLower() == "data") return ResourceType.data;
             else if (type.ToLower() == "code") return ResourceType.code;
-            else throw new InvalidResourceTypeException(type);
+            else throw new ArgumentProcessException($"Invalid resource type \"{type}\"");
+        }
+        
+        private static ResourceType inferResourceTypeFromResourceName(string resourceName)
+        {
+            try{
+                if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.code;
+                if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.data;
+                if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.model;
+                throw new System.Exception();
+            }
+            catch (System.Exception)
+            {
+                throw new ArgumentProcessException($"Could not infer resource type from extension of {resourceName}");
+            }
         }
         
         static void Main(string[] args)
@@ -264,22 +279,38 @@ namespace nyoka_cli
                             ResourceType resourceType = parseResourceType(opts.resourceType);
                             PackageManager.listResources(resourceType);
                         }
-                        catch (InvalidResourceTypeException)
+                        catch (ArgumentProcessException ex)
                         {
-                            CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
+                            CLIInterface.logError(ex.Message);
                         }
                     }
                 })
                 .WithParsed<AddOptions>(opts => {
-                    PackageManager.addPackage(
-                        opts.resourceName,
-                        opts.version // possible null
-                    );
+                    try
+                    {
+                        PackageManager.addPackage(
+                            inferResourceTypeFromResourceName(opts.resourceName),
+                            opts.resourceName,
+                            opts.version // possible null
+                        );
+                    }
+                    catch (ArgumentProcessException ex)
+                    {
+                        CLIInterface.logError(ex.Message);
+                    }
                 })
                 .WithParsed<RemoveOptions>(opts => {
-                    PackageManager.removePackage(
-                        opts.resourceName
-                    );
+                    try
+                    {
+                        PackageManager.removePackage(
+                            inferResourceTypeFromResourceName(opts.resourceName),
+                            opts.resourceName
+                        );
+                    }
+                    catch (ArgumentProcessException ex)
+                    {
+                        CLIInterface.logError(ex.Message);
+                    }
                 })
                 .WithParsed<AvailableOptions>(opts => {
                     if (opts.resourceType == null)
@@ -293,17 +324,25 @@ namespace nyoka_cli
                             ResourceType resourceType = parseResourceType(opts.resourceType);
                             PackageManager.listAvailableResources(resourceType);
                         }
-                        catch (InvalidResourceTypeException)
+                        catch (ArgumentProcessException ex)
                         {
-                            CLIInterface.logError($"Invalid resource type \"{opts.resourceType}\"");
+                            CLIInterface.logError(ex.Message);
                         }
                     }
                 })
                 .WithParsed<DependenciesOptions>(opts => {
-                    PackageManager.listDependencies(
-                        opts.resourceName,
-                        opts.version
-                    );
+                    try
+                    {
+                        PackageManager.listDependencies(
+                            inferResourceTypeFromResourceName(opts.resourceName),
+                            opts.resourceName,
+                            opts.version
+                        );
+                    }
+                    catch (ArgumentProcessException ex)
+                    {
+                        CLIInterface.logError(ex.Message);
+                    }
                 })
                 // .WithParsed<PruneToOptions>(opts => {
                 //     PackageManager.pruneTo(
@@ -313,13 +352,21 @@ namespace nyoka_cli
                 //     );
                 // })
                 .WithParsed<PublishOptions>(opts => {
-                    PackageManager.publishResource(
-                        opts.resourceName,
-                        opts.version,
-                        opts.codeDeps.ToList(),
-                        opts.dataDeps.ToList(),
-                        opts.modelDeps.ToList()
-                    );
+                    try
+                    {
+                        PackageManager.publishResource(
+                            inferResourceTypeFromResourceName(opts.resourceName),
+                            opts.resourceName,
+                            opts.version,
+                            opts.codeDeps.ToList(),
+                            opts.dataDeps.ToList(),
+                            opts.modelDeps.ToList()
+                        );
+                    }
+                    catch (ArgumentProcessException ex)
+                    {
+                        CLIInterface.logError(ex.Message);
+                    }
                 });
         }
     }
