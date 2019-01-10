@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-// using ZmodFiles;
+using Microsoft.AspNetCore.Http;
 using System.IO;
 using InfoTransferContainers;
 using ServerResourceDirNS;
 using System.Web.Http;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Web;
+using Newtonsoft.Json;
 
 namespace example_server.Controllers
 {
-    [Route("api/getresources")]
+    [Route("api")]
     [ApiController]
     public class ResourcesController : ControllerBase
     {
@@ -22,7 +25,7 @@ namespace example_server.Controllers
             )
         );
 
-        [HttpGet("{resourceType}")]
+        [HttpGet("getresources/{resourceType}")]
         public ActionResult<Dictionary<string, FileInfoTransferContainer>> GetAvailableResources(string resourceType)
         {
             if (resourceType == "code") return serverDir.getCodeServerInfoDict();
@@ -31,7 +34,7 @@ namespace example_server.Controllers
             throw new FileNotFoundException();
         }
 
-        [HttpGet("{resourceType}/{resourceName}/versions")]
+        [HttpGet("getresources/{resourceType}/{resourceName}/versions")]
         public ActionResult<ResourceVersionsInfoContainer> GetResourceVersions(string resourceType, string resourceName)
         {
             if (resourceType == "code") return serverDir.getCodeVersions(resourceName);
@@ -40,7 +43,7 @@ namespace example_server.Controllers
             throw new FileNotFoundException();
         }
 
-        [HttpGet("{resourceType}/{resourceName}/versions/{version}/file")]
+        [HttpGet("getresources/{resourceType}/{resourceName}/versions/{version}/file")]
         public FileResult GetResource(string resourceType, string resourceName, string version)
         {
             if (resourceType == "code") return serverDir.getCodeStream(resourceName, version);
@@ -49,7 +52,7 @@ namespace example_server.Controllers
             throw new FileNotFoundException();
         }
 
-        [HttpGet("{resourceType}/{resourceName}/versions/{version}/dependencies")]
+        [HttpGet("getresources/{resourceType}/{resourceName}/versions/{version}/dependencies")]
         public ActionResult<ResourceDependencyInfoContainer> GetDependencies(string resourceType, string resourceName, string version)
         {
             if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version);
@@ -58,13 +61,32 @@ namespace example_server.Controllers
             throw new FileNotFoundException();
         }
 
-        [HttpPost]
-        public async Task PostTodoItem(string str)
+        // @TODO locks for uploading files? In order to prevent conflicting uploads
+        [HttpPost("postresources/{resourceType}/{resourceName}/versions/{version}/post")]
+        public ActionResult UploadImageAndOpenIt(
+            string resourceType,
+            string resourceName,
+            string version,
+            [FromQuery] string deps,
+            [FromQuery] string dataDeps,
+            [FromQuery] string modelDeps)
         {
-            // _context.TodoItems.Add(todoItem);
-            // await _context.SaveChangesAsync();
+            System.Console.WriteLine("RECEIVED VALUES");
+            System.Console.WriteLine(resourceType);
+            System.Console.WriteLine(resourceName);
+            System.Console.WriteLine(version);
+            System.Console.WriteLine(deps);
 
-            // return CreatedAtAction("GetTodoItem", new { id = todoItem.Id }, todoItem);
+            PublishDepsInfoContainer depsInfo = JsonConvert.DeserializeObject<PublishDepsInfoContainer>(deps);
+            
+            Stream requestFileStream = Request.Body;
+
+            // if (resourceType == "code") return serverDir
+            if (resourceType == "code") serverDir.addCodeResource(resourceName, version, depsInfo, requestFileStream);
+            if (resourceType == "data") serverDir.addDataResource(resourceName, version, depsInfo, requestFileStream);
+            if (resourceType == "model") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
+            
+            return Ok();
         }
     }
 }

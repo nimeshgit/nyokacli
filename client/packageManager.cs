@@ -492,6 +492,32 @@ namespace PackageManagerNS
         {
             try
             {
+                PublishDepsInfoContainer publishDepsInfo = new PublishDepsInfoContainer();
+
+                (Dictionary<string, PublishDepsInfoContainer.PublishDepDescription>, List<string>)[] publishParsePairs = {
+                    (publishDepsInfo.codeDeps, codeDeps),
+                    (publishDepsInfo.dataDeps, dataDeps),
+                    (publishDepsInfo.modelDeps, modelDeps),
+                };
+
+                foreach (var (publishDepDict, resourceStringList) in publishParsePairs)
+                {
+                    foreach (string resourceString in resourceStringList)
+                    {
+                        string[] splitByAtSign = resourceString.Split("@");
+                        
+                        if (splitByAtSign.Length != 2)
+                        {
+                            CLIInterface.logError("Invalid resource name {resourceString}. It should be formatted like this: \"[resource name]@[version number]\"");
+                            return;
+                        }
+                        string depName = splitByAtSign[0];
+                        string depVersion = splitByAtSign[1];
+                        
+                        publishDepDict[depName] = new PublishDepsInfoContainer.PublishDepDescription(depVersion);
+                    }
+                }
+
                 var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
                     { ResourceType.code, NetworkUtils.getAvailableResources(ResourceType.code) },
                     { ResourceType.data, NetworkUtils.getAvailableResources(ResourceType.data) },
@@ -499,7 +525,7 @@ namespace PackageManagerNS
                 };
 
                 // If a file to publish with the given name can't be found
-                if (!FSOps.publishFileExists(resourceName))
+                if (!FSOps.checkPublishFileExists(resourceName))
                 {
                     CLIInterface.logError("Resource with name {resourceName} not found in current directory.");
                     return;
@@ -529,6 +555,19 @@ namespace PackageManagerNS
                         }
                     }
                 }
+
+
+                CLIInterface.logLine("Opening file.");
+                FileStream fileStream = FSOps.readPublishFile(resourceName);
+                
+                CLIInterface.logLine("Uploading file.");
+                NetworkUtils.publishResource(
+                    fileStream,
+                    resourceType,
+                    resourceName,
+                    publishVersion,
+                    publishDepsInfo
+                );
             }
             catch (FSOps.FSOpsException ex)
             {

@@ -197,7 +197,7 @@ namespace FSOpsNS
             }
         }
 
-        public static bool publishFileExists(string resourceName)
+        public static bool checkPublishFileExists(string resourceName)
         {
             try
             {
@@ -206,6 +206,18 @@ namespace FSOpsNS
             catch (System.Exception)
             {
                 throw new FSOpsException($"Failed to check for existence of file {resourceName}");
+            }
+        }
+
+        public static FileStream readPublishFile(string fileName)
+        {
+            try
+            {
+                return File.OpenRead(fileName);
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to open file {fileName}. Does this file exist?");
             }
         }
     }

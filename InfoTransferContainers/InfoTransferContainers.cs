@@ -63,4 +63,38 @@ namespace InfoTransferContainers
             this.modelDeps = new Dictionary<string, DependencyDescription>();
         }
     }
+
+    public class PublishDepsInfoContainer
+    {
+        public class PublishDepDescription
+        {
+            public string version;
+
+            public PublishDepDescription(string version)
+            {
+                this.version = version;
+            }
+        }
+
+        public Dictionary<string, PublishDepDescription> codeDeps;
+        public Dictionary<string, PublishDepDescription> dataDeps;
+        public Dictionary<string, PublishDepDescription> modelDeps;
+
+        public PublishDepsInfoContainer()
+        {
+            this.codeDeps = new Dictionary<string, PublishDepDescription>();
+            this.dataDeps = new Dictionary<string, PublishDepDescription>();
+            this.modelDeps = new Dictionary<string, PublishDepDescription>();
+        }
+
+        public PublishDepsInfoContainer(
+            Dictionary<string, PublishDepDescription> codeDeps,
+            Dictionary<string, PublishDepDescription> dataDeps,
+            Dictionary<string, PublishDepDescription> modelDeps)
+        {
+            this.codeDeps = codeDeps;
+            this.dataDeps = dataDeps;
+            this.modelDeps = modelDeps;
+        }
+    }
 }

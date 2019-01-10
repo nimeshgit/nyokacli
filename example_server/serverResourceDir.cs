@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace ServerResourceDirNS
 {
@@ -217,6 +218,61 @@ namespace ServerResourceDirNS
                 versions[0] // first item in sorted list is the newest version
             );
         }
+
+        private List<DepsFileJson.DepsFileEntry> publishDepsInfosToDepsFileEntries(Dictionary<string, PublishDepsInfoContainer.PublishDepDescription> depDescriptionDict)
+        {
+            var depsEntries = new List<DepsFileJson.DepsFileEntry>();
+
+            foreach (var (depName, depDescription) in depDescriptionDict.Select(x => (x.Key, x.Value)))
+            {
+                depsEntries.Add(new DepsFileJson.DepsFileEntry(depName, depDescription.version));
+            }
+
+            return depsEntries;
+        }
+
+        private void addResource(string parentDirPath, string resourceName, string version, PublishDepsInfoContainer depsInfoContainer, Stream inputResourceStream)
+        {
+            string resourceDir = Path.Combine(parentDirPath, resourceName);
+            if (!Directory.Exists(resourceDir))
+            {
+                Directory.CreateDirectory(resourceDir);
+            }
+            
+            string resourceVersionDir = Path.Combine(resourceDir, version);
+            if (!Directory.Exists(resourceVersionDir))
+            {
+                Directory.CreateDirectory(resourceVersionDir);
+            }
+
+            string resourceFilePath = Path.Combine(
+                resourceVersionDir,
+                resourceName
+            );
+            string resourceDepsPath = Path.Combine(
+                resourceVersionDir,
+                resourceName + depsFileExtension
+            );
+
+            if (File.Exists(resourceFilePath)) File.Delete(resourceFilePath);
+            if (File.Exists(resourceDepsPath)) File.Delete(resourceFilePath);
+            
+            using (Stream resourceFileStream = File.OpenWrite(resourceFilePath))
+            using (var resourceDepsStream = new StreamWriter(File.OpenWrite(resourceDepsPath)))
+            {
+                inputResourceStream.CopyTo(resourceFileStream);
+
+                var depsToSerialize = new DepsFileJson(
+                    publishDepsInfosToDepsFileEntries(depsInfoContainer.codeDeps),
+                    publishDepsInfosToDepsFileEntries(depsInfoContainer.dataDeps),
+                    publishDepsInfosToDepsFileEntries(depsInfoContainer.modelDeps)
+                );
+
+                string serializedDeps = JsonConvert.SerializeObject(depsToSerialize);
+
+                resourceDepsStream.Write(serializedDeps);
+            }
+        }
         
         public ServerResourceDir(string pathArg)
         {
@@ -238,5 +294,12 @@ namespace ServerResourceDirNS
         public ResourceDependencyInfoContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
         public ResourceDependencyInfoContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);
         public ResourceDependencyInfoContainer getModelResourceDeps(string resourceName, string version) => getDirResourceDeps(modelDirPath, version, resourceName);
+
+        public void addCodeResource(string resourceName, string version, PublishDepsInfoContainer depsInfoContainer, Stream resourceFileStream) =>
+            addResource(codeDirPath, resourceName, version, depsInfoContainer, resourceFileStream);
+        public void addDataResource(string resourceName, string version, PublishDepsInfoContainer depsInfoContainer, Stream resourceFileStream) =>
+            addResource(dataDirPath, resourceName, version, depsInfoContainer, resourceFileStream);
+        public void addModelResource(string resourceName, string version, PublishDepsInfoContainer depsInfoContainer, Stream resourceFileStream) =>
+            addResource(modelDirPath, resourceName, version, depsInfoContainer, resourceFileStream);
     }
 }
