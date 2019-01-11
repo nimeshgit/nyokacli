@@ -8,7 +8,6 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
-// @TODO make network error messages more specific
 // @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
@@ -92,6 +91,24 @@ namespace PackageManagerNS
         {
             try
             {
+                // check that resource is on server
+                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                if (!availableResources.ContainsKey(resourceName))
+                {
+                    CLIInterface.logError($"Could not find {resourceType.ToString()} resource with name {resourceName} on server");
+                    return;
+                }
+
+                // check that resource on server has specified version
+                var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                if (!versionInfo.versions.Contains(version))
+                {
+                    CLIInterface.logError(
+                        $"Could not find version {version} on server. These versions were found: {string.Join(", ", versionInfo.versions)}"
+                    );
+                    return;
+                }
+                
                 using (Stream resourceServerStream = NetworkUtils.getResource(resourceType, resourceName, version))
                 using (FileStream resourceFileStream = FSOps.createResourceFile(resourceType, resourceName))
                 using (StreamWriter versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
@@ -129,17 +146,16 @@ namespace PackageManagerNS
                 }
 
                 string version = resourceDescription.version; // possible null
+                var serverVersionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
                 
                 if (version == null)
                 {
-                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                    version = versionInfo.latestVersion;
+                    version = serverVersionInfo.latestVersion;
                 }
                 else
                 {
-                    // check if the requested version is available from the server
-                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                    if (!versionInfo.versions.Contains(version))
+                    // check that the requested version is available from the server
+                    if (!serverVersionInfo.versions.Contains(version))
                     {
                         CLIInterface.logError($"There is no version {version} available of resource {resourceName}.");
                         return;
@@ -534,11 +550,11 @@ namespace PackageManagerNS
                     }
                 }
 
-                var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
-                    { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
-                    { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
-                    { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
-                };
+                // var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
+                //     { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
+                //     { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
+                //     { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
+                // };
 
                 string resourceName = resourceDescription.resourceName;
                 ResourceType resourceType = resourceDescription.resourceType;
@@ -564,13 +580,15 @@ namespace PackageManagerNS
                     return;
                 }
 
-                // If this resource exists on server
-                if (allAvailableResources[resourceType].ContainsKey(resourceName))
+                var resourcesOnServer = NetworkUtils.getAvailableResources(resourceType);
+                
+                // If this resource already exists on server
+                if (resourcesOnServer.ContainsKey(resourceName))
                 {
-                    ResourceVersionsInfoContainer versionsInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    ResourceVersionsInfoContainer serverVersionsInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
 
                     // If this resource exists with the same version on server
-                    if (versionsInfo.versions.Contains(publishVersion))
+                    if (serverVersionsInfo.versions.Contains(publishVersion))
                     {
                         bool continueAnyways = CLIInterface.askYesOrNo(
                             $"Version {publishVersion} of {resourceType.ToString()} resource " +

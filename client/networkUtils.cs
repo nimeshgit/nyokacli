@@ -21,11 +21,43 @@ namespace NetworkUtilsNS
         private static string getApiUrl => $"{apiUrl}/getresources";
         private static string postApiUrl => $"{apiUrl}/postresources";
 
+        private static string resourceUrlSection(ResourceType resourceType)
+        {
+            if (resourceType == ResourceType.Code) return "code";
+            if (resourceType == ResourceType.Data) return "data";
+            if (resourceType == ResourceType.Model) return "model";
+            throw new NetworkUtilsException("Could not form request to server");
+        }
+
+        private static string resourceFileUrl(ResourceType resourceType, string resourceName, string version)
+        {
+            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/file";
+        }
+        
+        private static string resourceVersionsUrl(ResourceType resourceType, string resourceName)
+        {
+            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions";
+        }
+        private static string resourceDependenciesUrl(ResourceType resourceType, string resourceName, string version)
+        {
+            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/dependencies";
+        }
+
+        private static string availableResourcesUrl(ResourceType resourceType)
+        {
+            return $"{getApiUrl}/{resourceUrlSection(resourceType)}";
+        }
+
+        private static string resourcePostUrl(ResourceType resourceType, string resourceName, string version)
+        {
+            return $"{postApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/post";
+        }
+
         private static readonly System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
         public static System.IO.Stream getResource(ResourceType resourceType, string resourceName, string version)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/file";
+            string url = resourceFileUrl(resourceType, resourceName, version);
             
             try
             {
@@ -34,13 +66,15 @@ namespace NetworkUtilsNS
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to get requested resource from server");
+                throw new NetworkUtilsException(
+                    $"Unable to get file for {resourceType} resource {resourceName}"
+                );
             }
         }
 
         public static ResourceVersionsInfoContainer getResourceVersions(ResourceType resourceType, string resourceName)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions";
+            string url = resourceVersionsUrl(resourceType, resourceName);
 
             try
             {
@@ -51,17 +85,22 @@ namespace NetworkUtilsNS
             }
             catch (JsonReaderException)
             {
-                throw new NetworkUtilsException("Unable to process server response");
+                throw new NetworkUtilsException(
+                    $"Unable to process server response to request for " +
+                    $"list of versions of {resourceType} resource {resourceName}"
+                );
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to get requested information from server");
+                throw new NetworkUtilsException(
+                    $"Unable to get list of versions of {resourceType} resource {resourceName} from server"
+                );
             }
         }
 
         public static ResourceDependencyInfoContainer getResourceDependencies(ResourceType resourceType, string resourceName, string version)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/dependencies";
+            string url = resourceDependenciesUrl(resourceType, resourceName, version);
 
             try
             {
@@ -71,17 +110,17 @@ namespace NetworkUtilsNS
             }
             catch (JsonReaderException)
             {
-                throw new NetworkUtilsException("Unable to process server response");
+                throw new NetworkUtilsException("Unable to process server response to request for list of dependencies");
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to get requested information from server");
+                throw new NetworkUtilsException("Unable to get list of package dependencies from server");
             }
         }
 
         public static Dictionary<string, FileInfoTransferContainer> getAvailableResources(ResourceType resourceType)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}";
+            string url = availableResourcesUrl(resourceType);
 
             try
             {
@@ -91,11 +130,11 @@ namespace NetworkUtilsNS
             }
             catch (JsonReaderException)
             {
-                throw new NetworkUtilsException("Unable to process server response");
+                throw new NetworkUtilsException("Unable to process server response to available resources request");
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to get requested information from server");
+                throw new NetworkUtilsException("Unable to get list of available resources from server");
             }
         }
 
@@ -110,7 +149,7 @@ namespace NetworkUtilsNS
 
             queryString["deps"] = JsonConvert.SerializeObject(publishDepsInfo);
 
-            string url = $"{postApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/post?{queryString.ToString()}";
+            string url = resourcePostUrl(resourceType, resourceName, version) + "?" + queryString.ToString();
 
             try
             {
@@ -127,7 +166,6 @@ namespace NetworkUtilsNS
 
                     // content.Add(new System.Net.Http.StringContent("gettext"), "type");
 
-
                     System.Net.Http.HttpResponseMessage statusResult = client.PostAsync(url, fileContent).Result;
                     
                     if (!statusResult.IsSuccessStatusCode)
@@ -136,15 +174,15 @@ namespace NetworkUtilsNS
                         throw new NetworkUtilsException("Unsuccessful");
                     }
                 }
-                // client.PostAsync(url, )
-                // System.Net.Webc
-                // client.PostAsync(url, new HttpContent)
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to post resource to server");
+                throw new NetworkUtilsException("Unable to publish {resourceType} resource {resourceName} to server");
             }
-            // postresources/{resourceType}/{resourceName}/versions/{version}/post
         }
     }
 }
