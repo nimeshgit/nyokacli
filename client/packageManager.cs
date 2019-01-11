@@ -8,6 +8,7 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
+// @TODO add possibility of making 
 // @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
@@ -104,7 +105,7 @@ namespace PackageManagerNS
                 if (!versionInfo.versions.Contains(version))
                 {
                     CLIInterface.logError(
-                        $"Could not find version {version} on server. These versions were found: {string.Join(", ", versionInfo.versions)}"
+                        $"Could not find version {version} on server. These are the version(s) available: {string.Join(", ", versionInfo.versions)}"
                     );
                     return;
                 }
@@ -157,7 +158,10 @@ namespace PackageManagerNS
                     // check that the requested version is available from the server
                     if (!serverVersionInfo.versions.Contains(version))
                     {
-                        CLIInterface.logError($"There is no version {version} available of resource {resourceName}.");
+                        CLIInterface.logError(
+                            $"There is no version {version} available of resource {resourceName}. " +
+                            $"These are the version(s) available: {string.Join(", ", serverVersionInfo.versions)}"
+                        );
                         return;
                     }
                 }

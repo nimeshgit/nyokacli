@@ -211,32 +211,34 @@ namespace nyoka_cli
             }
         }
 
+        private static void validateFileName(string resourceName)
+        {
+            foreach (char ch in resourceName)
+            {
+                // @TODO use regex?
+                if (!"qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890_-.".Contains(ch))
+                {
+                    throw new ArgumentProcessException($"Invalid character in file name: \"{ch}\"");
+                }
+            }
+        }
+
         private static PackageManager.ResourceIdentifier generateResourceIdentifier(string resourceStr)
         {
             string[] splitByAt = resourceStr.Split('@');
 
+            string version;
+            string resourceName;
+
             if (splitByAt.Length == 1)
             {
-                return new PackageManager.ResourceIdentifier(
-                    resourceStr,
-                    inferResourceTypeFromResourceName(resourceStr)
-                );
+                version = null; // redundant?
+                resourceName = splitByAt[0];
             }
             else if (splitByAt.Length == 2)
             {
-                string resourceNameSection = splitByAt[0];
-                ResourceType resourceType = inferResourceTypeFromResourceName(resourceNameSection);
-
-                string version = splitByAt[1];
-
-                // validate version string
-                validateVersionString(resourceStr, version);
-                
-                return new PackageManager.ResourceIdentifier(
-                    resourceNameSection,
-                    resourceType,
-                    version
-                );
+                version = splitByAt[1];
+                resourceName = splitByAt[0];
             }
             else
             {
@@ -244,6 +246,18 @@ namespace nyoka_cli
                     $"Could not process \"{resourceStr}\": Only one @ symbol is permitted in a resource name"
                 );
             }
+
+            ResourceType resourceType = inferResourceTypeFromResourceName(resourceName);
+
+            if (version != null)
+            {
+                // validate version string
+                validateVersionString(resourceStr, version);
+            }
+            
+            validateFileName(resourceName);
+
+            return new PackageManager.ResourceIdentifier(resourceName, resourceType, version);
         }
         
         static void Main(string[] args)

@@ -16,6 +16,8 @@ namespace FSOpsNS
             {
             }
         }
+
+        public static char dirSeparatorChar => Path.DirectorySeparatorChar;
         private static readonly string codeDirName = "Code";
         private static readonly string dataDirName = "Data";
         private static readonly string modelDirName = "Model";
