@@ -112,12 +112,22 @@ namespace FSOpsNS
             }
         }
 
-        public static void removeResource(ResourceType resourceType, string resourceName)
+        public static void removeResourceFilesIfPresent(ResourceType resourceType, string resourceName)
         {
             try
             {
-                File.Delete(Path.Join(resourceType.ToString(), resourceName));
-                File.Delete(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+                string resourceFilePath = Path.Join(resourceType.ToString(), resourceName);
+                string resourceVersionFilePath = Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension);
+
+                if (File.Exists(resourceFilePath))
+                {
+                    File.Delete(resourceFilePath);
+                }
+
+                if (File.Exists(resourceVersionFilePath))
+                {
+                    File.Delete(resourceVersionFilePath);
+                }
             }
             catch (System.Exception)
             {
@@ -125,7 +135,7 @@ namespace FSOpsNS
             }
         }
         
-        public static bool resourceExists(ResourceType resourceType, string resourceName)
+        public static bool resourceFileExists(ResourceType resourceType, string resourceName)
         {
             try
             {
@@ -134,6 +144,18 @@ namespace FSOpsNS
             catch (System.Exception)
             {
                 throw new FSOpsException($"Failed to check file system for whether {resourceType.ToString()} resource {resourceName} exists");
+            }
+        }
+
+        public static bool resourceVersionFileExists(ResourceType resourceType, string resourceName)
+        {
+            try
+            {
+                return File.Exists(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+            }
+            catch (System.Exception)
+            {
+                throw new FSOpsException($"Failed to check for existence of version file for {resourceType.ToString()} resource {resourceName}");
             }
         }
 
@@ -161,11 +183,17 @@ namespace FSOpsNS
             }
         }
 
-        public static StreamWriter createResourceFileNyokaVersionFile(ResourceType resourceType, string resourceName)
+        public static StreamWriter createOrOverwriteResourceVersionFile(ResourceType resourceType, string resourceName)
         {
             try
             {
-                return File.CreateText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+                string filePath = Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension);
+                if  (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+                
+                return File.CreateText(filePath);
             }
             catch (System.Exception)
             {
@@ -196,28 +224,28 @@ namespace FSOpsNS
                 throw new FSOpsException($"Failed to determine file size of file for {resourceType.ToString()} resource {resourceName}");
             }
         }
+        // public static bool checkPublishFileExists(string resourceName)
+        // {
+        //     try
+        //     {
+        //         return File.Exists(resourceName);
+        //     }
+        //     catch (System.Exception)
+        //     {
+        //         throw new FSOpsException($"Failed to check for existence of file {resourceName}");
+        //     }
+        // }
 
-        public static bool checkPublishFileExists(string resourceName)
+        public static FileStream readResourceFile(ResourceType resourceType, string fileName)
         {
             try
             {
-                return File.Exists(resourceName);
+                string filePath = Path.Join(resourceType.ToString(), fileName);
+                return File.OpenRead(filePath);
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to check for existence of file {resourceName}");
-            }
-        }
-
-        public static FileStream readPublishFile(string fileName)
-        {
-            try
-            {
-                return File.OpenRead(fileName);
-            }
-            catch (System.Exception)
-            {
-                throw new FSOpsException($"Failed to open file {fileName}. Does this file exist?");
+                throw new FSOpsException($"Failed to open {resourceType.ToString()} resource {fileName}. Does this file exist?");
             }
         }
     }

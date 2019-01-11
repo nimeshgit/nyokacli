@@ -10,6 +10,10 @@ namespace FileTypeInferenceNS
             {
             }
         }
+
+        public static readonly string[] codeFileExtensions = {"py", "ipynb"};
+        public static readonly string[] modelFileExtensions = {"pmml"};
+        public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip"};
         private static string getLowerCaseFileExtension(string fileName)
         {
             string[] splitByDot = fileName.Split('.');
@@ -29,6 +33,7 @@ namespace FileTypeInferenceNS
         }
         public static bool isCodeFileName(string fileName)
         {
+            string extension = getLowerCaseFileExtension(fileName);
             switch(getLowerCaseFileExtension(fileName))
             {
             case "py":
@@ -41,6 +46,7 @@ namespace FileTypeInferenceNS
 
         public static bool isModelFileName(string fileName)
         {
+            string extension = getLowerCaseFileExtension(fileName);
             switch(getLowerCaseFileExtension(fileName))
             {
             case "pmml":
@@ -52,10 +58,15 @@ namespace FileTypeInferenceNS
 
         public static bool isDataFileName(string fileName)
         {
+            string extension = getLowerCaseFileExtension(fileName);
             switch(getLowerCaseFileExtension(fileName))
             {
             case "json":
             case "csv":
+            case "png":
+            case "jpg":
+            case "jpeg":
+            case "zip":
                 return true;
             default:
                 return false;

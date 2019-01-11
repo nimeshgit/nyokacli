@@ -8,7 +8,12 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
+// @TODO make nyoka publish create version file
+// @TODO handle missing version file safely
+// @TODO make network error messages more specific
 // @TODO make sure all streams are being closed properly?
+// @TODO give user option to overwrite resource using nyoka add
+// @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
     public static class PackageManager
@@ -92,7 +97,7 @@ namespace PackageManagerNS
             {
                 using (Stream resourceServerStream = NetworkUtils.getResource(resourceType, resourceName, version))
                 using (FileStream resourceFileStream = FSOps.createResourceFile(resourceType, resourceName))
-                using (StreamWriter versionFileStream = FSOps.createResourceFileNyokaVersionFile(resourceType, resourceName))
+                using (StreamWriter versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
                 {
                     Task resourceFileTask = Task.Factory.StartNew(() => resourceServerStream.CopyTo(resourceFileStream));
                     Task resourceVersionTask = Task.Factory.StartNew(() => versionFileStream.WriteLine(version));
@@ -162,33 +167,20 @@ namespace PackageManagerNS
                 }
 
                 // check if the resource is already present
-                if (FSOps.resourceExists(resourceType, resourceName))
+                if (FSOps.resourceFileExists(resourceType, resourceName))
                 {
-                    string presentVersion = FSOps.getResourceVersion(resourceType, resourceName);
-                    
-                    // if the resource is already present at the version requested
-                    if (presentVersion == version)
+                    bool continueAnyways = CLIInterface.askYesOrNo(
+                        $"{resourceType.ToString()} resource {resourceName} is already present. Delete and replace ?"
+                    );
+
+                    if (continueAnyways)
                     {
-                        CLIInterface.logLine($"{resourceType} resource \"{resourceName}\" is already present at version {version}");
-                        return;
+                        FSOps.removeResourceFilesIfPresent(resourceType, resourceName);
                     }
-                    // if the resource is present, but at another version
                     else
                     {
-                        bool continueAnyways = CLIInterface.askYesOrNo(
-                            $"{resourceType.ToString()} resource {resourceName} is already present " +
-                            $"at version {presentVersion}. Delete and replace with version {version}?"
-                        );
-
-                        if (continueAnyways)
-                        {
-                            FSOps.removeResource(resourceType, resourceName);
-                        }
-                        else
-                        {
-                            CLIInterface.logLine("Aborting resource add.");
-                            return;
-                        }
+                        CLIInterface.logLine("Aborting resource add.");
+                        return;
                     }
                 }
 
@@ -268,7 +260,7 @@ namespace PackageManagerNS
                 FSOps.createCodeDataModelDirs();
 
                 CLIInterface.logLine($"Removing {resourceType.ToString().ToLower()} resource \"{resourceName}\"");
-                if (!FSOps.resourceExists(resourceType, resourceName))
+                if (!FSOps.resourceFileExists(resourceType, resourceName))
                 {
                     CLIInterface.logError($"{resourceType} resource \"{resourceName}\" does not exist");
                     return;
@@ -283,7 +275,7 @@ namespace PackageManagerNS
                     }
                 }
 
-                FSOps.removeResource(resourceType, resourceName);
+                FSOps.removeResourceFilesIfPresent(resourceType, resourceName);
                 CLIInterface.logLine("Resource removed");
             }
             catch (FSOps.FSOpsException ex)
@@ -351,7 +343,10 @@ namespace PackageManagerNS
 
                 if (version == null)
                 {
-                    if (FSOps.resourceExists(resourceType, resourceName))
+                    if (
+                        FSOps.resourceFileExists(resourceType, resourceName)
+                        && FSOps.resourceVersionFileExists(resourceType, resourceName)
+                    )
                     {
                         version = FSOps.getResourceVersion(resourceType, resourceName);
                     }
@@ -443,12 +438,28 @@ namespace PackageManagerNS
                     
                     foreach (string resourceName in availableResources.Keys.OrderBy(k => k))
                     {
-                        bool resourceExistsLocally = FSOps.resourceExists(resourceType, resourceName);
+                        string localVersionStr;
+                        bool resourceExistsLocally = FSOps.resourceFileExists(resourceType, resourceName);
+                        if (FSOps.resourceFileExists(resourceType, resourceName))
+                        {
+                            if (FSOps.resourceVersionFileExists(resourceType, resourceName))
+                            {
+                                localVersionStr = FSOps.getResourceVersion(resourceType, resourceName);
+                            }
+                            else
+                            {
+                                localVersionStr = "No version information found";
+                            }
+                        }
+                        else
+                        {
+                            localVersionStr = "Not present";
+                        }
                         printTable.addRow(
                             resourceType.ToString(),
                             resourceName,
                             availableResources[resourceName].versionStr,
-                            resourceExistsLocally ? FSOps.getResourceVersion(resourceType, resourceName) : "Not Downloaded" ,
+                            resourceExistsLocally ? FSOps.getResourceVersion(resourceType, resourceName) : "Not Present",
                             bytesToString(availableResources[resourceName].byteCount)
                         );
                     }
@@ -476,6 +487,7 @@ namespace PackageManagerNS
                 {
                     if (depDescription.version == null)
                     {
+                        
                         CLIInterface.logError(
                             "The versions of dependencies must be supplied. For example, " +
                             "\"dependency.csv\" does not include version, \"dependency.csv@1.2.3\" does."
@@ -511,17 +523,20 @@ namespace PackageManagerNS
                 // check that user has provided version to publish file as
                 if (publishVersion == null)
                 {
-                    CLIInterface.logError(
-                        "Version number must be provided when publishing a file. " +
-                        "Example: In \"publish asdf.py@1.2.3\", asdf.py would be the file name and 1.2.3 would be the version."
-                    );
+                    publishVersion = "1.0";
+                    CLIInterface.logLine($"Using default version {publishVersion}");
+                }
+
+                if (!FSOps.hasNecessaryDirs())
+                {
+                    CLIInterface.logError("Could not find nyoka resource folders in current directory.");
                     return;
                 }
 
                 // If a file to publish with the given name can't be found
-                if (!FSOps.checkPublishFileExists(resourceName))
+                if (!FSOps.resourceFileExists(resourceType, resourceName))
                 {
-                    CLIInterface.logError($"Resource with name {resourceName} not found in current directory.");
+                    CLIInterface.logError($"Resource with name {resourceName} not found.");
                     return;
                 }
 
@@ -552,7 +567,7 @@ namespace PackageManagerNS
 
 
                 CLIInterface.logLine("Opening file.");
-                FileStream fileStream = FSOps.readPublishFile(resourceName);
+                FileStream fileStream = FSOps.readResourceFile(resourceType, resourceName);
                 
                 CLIInterface.logLine("Uploading file.");
                 NetworkUtils.publishResource(
@@ -562,6 +577,12 @@ namespace PackageManagerNS
                     publishVersion,
                     publishDepsInfo
                 );
+
+                // create version file locally for this resource
+                using (var versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
+                {
+                    versionFileStream.WriteLine(publishVersion);
+                }
             }
             catch (FSOps.FSOpsException ex)
             {
