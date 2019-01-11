@@ -116,8 +116,8 @@ namespace FSOpsNS
         {
             try
             {
-                string resourceFilePath = Path.Join(resourceType.ToString(), resourceName);
-                string resourceVersionFilePath = Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension);
+                string resourceFilePath = Path.Join(resourceType.ToString().ToLower(), resourceName);
+                string resourceVersionFilePath = Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension);
 
                 if (File.Exists(resourceFilePath))
                 {
@@ -131,7 +131,7 @@ namespace FSOpsNS
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to remove {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to remove {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
         
@@ -139,11 +139,11 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Exists(Path.Join(resourceType.ToString(), resourceName));
+                return File.Exists(Path.Join(resourceType.ToString().ToLower(), resourceName));
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to check file system for whether {resourceType.ToString()} resource {resourceName} exists");
+                throw new FSOpsException($"Failed to check file system for whether {resourceType.ToString().ToLower()} resource {resourceName} exists");
             }
         }
 
@@ -151,11 +151,11 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Exists(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension));
+                return File.Exists(Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension));
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to check for existence of version file for {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to check for existence of version file for {resourceType.ToString().ToLower().ToLower()} resource {resourceName}");
             }
         }
 
@@ -163,11 +163,11 @@ namespace FSOpsNS
         {
             try
             {
-                return new DirectoryInfo(resourceType.ToString()).EnumerateFiles().Select(file => file.Name);
+                return new DirectoryInfo(resourceType.ToString().ToLower().ToLower()).EnumerateFiles().Select(file => file.Name);
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to get list of {resourceType.ToString()} resources from file system");
+                throw new FSOpsException($"Failed to get list of {resourceType.ToString().ToLower().ToLower()} resources from file system");
             }
         }
 
@@ -175,11 +175,11 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Create(Path.Join(resourceType.ToString(), resourceName));
+                return File.Create(Path.Join(resourceType.ToString().ToLower(), resourceName));
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to create file for {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to create file for {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
 
@@ -187,7 +187,7 @@ namespace FSOpsNS
         {
             try
             {
-                string filePath = Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension);
+                string filePath = Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension);
                 if  (File.Exists(filePath))
                 {
                     File.Delete(filePath);
@@ -197,7 +197,7 @@ namespace FSOpsNS
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to create metadata file for {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to create metadata file for {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
 
@@ -205,11 +205,11 @@ namespace FSOpsNS
         {
             try
             {
-                return File.ReadAllText(Path.Join(resourceType.ToString(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
+                return File.ReadAllText(Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to read metadata file for {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to read metadata file for {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
 
@@ -217,11 +217,11 @@ namespace FSOpsNS
         {
             try
             {
-                return new FileInfo(Path.Join(resourceType.ToString(), resourceName)).Length;
+                return new FileInfo(Path.Join(resourceType.ToString().ToLower(), resourceName)).Length;
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to determine file size of file for {resourceType.ToString()} resource {resourceName}");
+                throw new FSOpsException($"Failed to determine file size of file for {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
         // public static bool checkPublishFileExists(string resourceName)
@@ -240,12 +240,12 @@ namespace FSOpsNS
         {
             try
             {
-                string filePath = Path.Join(resourceType.ToString(), fileName);
+                string filePath = Path.Join(resourceType.ToString().ToLower(), fileName);
                 return File.OpenRead(filePath);
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to open {resourceType.ToString()} resource {fileName}. Does this file exist?");
+                throw new FSOpsException($"Failed to open {resourceType.ToString().ToLower()} resource {fileName}. Does this file exist?");
             }
         }
     }

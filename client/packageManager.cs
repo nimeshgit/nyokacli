@@ -8,11 +8,7 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
-// @TODO make nyoka publish create version file
-// @TODO handle missing version file safely
 // @TODO make network error messages more specific
-// @TODO make sure all streams are being closed properly?
-// @TODO give user option to overwrite resource using nyoka add
 // @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
@@ -36,6 +32,7 @@ namespace PackageManagerNS
                 this.version = version;
             }
         }
+        
         private static string bytesToString(long bytes)
         {
             const long KSize = 1024;
@@ -268,10 +265,27 @@ namespace PackageManagerNS
 
                 if (resourceDescription.version != null)
                 {
-                    string localVersion = FSOps.getResourceVersion(resourceType, resourceName);
-                    if (localVersion != resourceDescription.version)
+                    if (FSOps.resourceVersionFileExists(resourceType, resourceName))
                     {
-                        CLIInterface.logError($"Could not remove version {resourceDescription.version} since present version is {localVersion}");
+                        string localVersion = FSOps.getResourceVersion(resourceType, resourceName);
+                        if (localVersion != resourceDescription.version)
+                        {
+                            bool removeAnyways = CLIInterface.askYesOrNo($"Present version is {localVersion}, not {resourceDescription.version}. Remove anyways?");
+                            if (!removeAnyways)
+                            {
+                                CLIInterface.logLine("Aborting resource removal.");
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool removeAnyways = CLIInterface.askYesOrNo($"Local file {resourceName} has unknown version. Remove anyways?");
+                        if (!removeAnyways)
+                        {
+                            CLIInterface.logLine("Aborting resource removal.");
+                            return;
+                        }
                     }
                 }
 
@@ -309,7 +323,16 @@ namespace PackageManagerNS
                 {
                     foreach (string resourceName in FSOps.resourceNames(resourceType))
                     {
-                        string version = FSOps.getResourceVersion(resourceType, resourceName);
+                        string version;
+                        if (FSOps.resourceVersionFileExists(resourceType, resourceName))
+                        {
+                            version = FSOps.getResourceVersion(resourceType, resourceName);
+                        }
+                        else
+                        {
+                            version = "Unknown version";
+                        }
+                        
                         long fileSize = FSOps.getResourceSize(resourceType, resourceName);
                         
                         table.addRow(
@@ -440,7 +463,7 @@ namespace PackageManagerNS
                     {
                         string localVersionStr;
                         bool resourceExistsLocally = FSOps.resourceFileExists(resourceType, resourceName);
-                        if (FSOps.resourceFileExists(resourceType, resourceName))
+                        if (resourceExistsLocally)
                         {
                             if (FSOps.resourceVersionFileExists(resourceType, resourceName))
                             {
@@ -578,7 +601,7 @@ namespace PackageManagerNS
                     publishDepsInfo
                 );
 
-                // create version file locally for this resource
+                // create or overwrite version file locally for this resource to be the publishVersion
                 using (var versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
                 {
                     versionFileStream.WriteLine(publishVersion);
