@@ -7,6 +7,7 @@ namespace InfoTransferContainers
     {
         public long byteCount;
         public string versionStr;
+
         public FileInfoTransferContainer(long byteCount, string versionStr)
         {
             this.byteCount = byteCount;
@@ -18,13 +19,13 @@ namespace InfoTransferContainers
     {
         public List<string> versions;
         public string latestVersion;
+
         public ResourceVersionsInfoContainer(List<string> versions, string latestVersion)
         {
             this.versions = versions;
             this.latestVersion = latestVersion;
         }
     }
-
 
     public class ResourceDependencyInfoContainer
     {

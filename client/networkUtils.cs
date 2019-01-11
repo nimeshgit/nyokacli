@@ -10,14 +10,14 @@ namespace NetworkUtilsNS
     {
         public class NetworkUtilsException : System.Exception
         {
-            public NetworkUtilsException(string mssg) 
+            public NetworkUtilsException(string mssg)
             : base(mssg)
             {
             }
         }
 
         private static readonly string apiUrl = "http://localhost:5000/api";
-        
+
         private static string getApiUrl => $"{apiUrl}/getresources";
         private static string postApiUrl => $"{apiUrl}/postresources";
 
@@ -33,11 +33,12 @@ namespace NetworkUtilsNS
         {
             return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/file";
         }
-        
+
         private static string resourceVersionsUrl(ResourceType resourceType, string resourceName)
         {
             return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions";
         }
+
         private static string resourceDependenciesUrl(ResourceType resourceType, string resourceName, string version)
         {
             return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/dependencies";
@@ -58,7 +59,7 @@ namespace NetworkUtilsNS
         public static System.IO.Stream getResource(ResourceType resourceType, string resourceName, string version)
         {
             string url = resourceFileUrl(resourceType, resourceName, version);
-            
+
             try
             {
                 System.IO.Stream stream = client.GetStreamAsync(url).Result;
@@ -80,7 +81,7 @@ namespace NetworkUtilsNS
             {
                 string resourceJson = client.GetStringAsync(url).Result;
                 ResourceVersionsInfoContainer versionsInfo = JsonConvert.DeserializeObject<ResourceVersionsInfoContainer>(resourceJson);
-                
+
                 return versionsInfo;
             }
             catch (JsonReaderException)
@@ -167,17 +168,13 @@ namespace NetworkUtilsNS
                     // content.Add(new System.Net.Http.StringContent("gettext"), "type");
 
                     System.Net.Http.HttpResponseMessage statusResult = client.PostAsync(url, fileContent).Result;
-                    
+
                     if (!statusResult.IsSuccessStatusCode)
                     {
                         System.Console.WriteLine("not success status code");
                         throw new NetworkUtilsException("Unsuccessful");
                     }
                 }
-            }
-            catch (System.Net.Http.HttpRequestException)
-            {
-                
             }
             catch (System.Exception)
             {

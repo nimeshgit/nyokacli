@@ -14,10 +14,11 @@ namespace FileTypeInferenceNS
         public static readonly string[] codeFileExtensions = {"py", "ipynb"};
         public static readonly string[] modelFileExtensions = {"pmml"};
         public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip"};
+
         private static string getLowerCaseFileExtension(string fileName)
         {
             string[] splitByDot = fileName.Split('.');
-            
+
             if (splitByDot.Length < 2)
             {
                 throw new FileTypeInferenceError($"File name {fileName} has no extension");
@@ -31,6 +32,7 @@ namespace FileTypeInferenceNS
 
             return extension.Trim().ToLower();
         }
+
         public static bool isCodeFileName(string fileName)
         {
             string extension = getLowerCaseFileExtension(fileName);

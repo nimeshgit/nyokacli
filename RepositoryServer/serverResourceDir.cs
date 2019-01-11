@@ -11,7 +11,8 @@ namespace ServerResourceDirNS
     public class ServerResourceDir
     {
         private static string depsFileExtension = ".deps";
-        private static string getMimeType(FileInfo fileInfo) {
+        private static string getMimeType(FileInfo fileInfo)
+        {
             string extension = fileInfo.Name.Substring(fileInfo.Name.LastIndexOf(".") + 1);
 
             switch (extension) {
@@ -28,11 +29,13 @@ namespace ServerResourceDirNS
         }
 
 
-        private static int compareVersions(string v1, string v2) {
+        private static int compareVersions(string v1, string v2)
+        {
             List<int> v1Sections = v1.Split(".").Select(sec => int.Parse(sec)).ToList();
             List<int> v2Sections = v2.Split(".").Select(sec => int.Parse(sec)).ToList();
 
-            for (int pos = 0;; pos++) {
+            for (int pos = 0;; pos++)
+            {
                 if (pos == v1Sections.Count && pos == v2Sections.Count) return 0;
                 if (pos == v1Sections.Count) return -1;
                 if (pos == v2Sections.Count) return 1;
@@ -47,14 +50,16 @@ namespace ServerResourceDirNS
         private string dataDirPath => $"{root}/Data";
         private string modelDirPath => $"{root}/Model";
 
-        private Dictionary<string, FileInfoTransferContainer> getDirServerInfoDict(string parentDirPath) {
+        private Dictionary<string, FileInfoTransferContainer> getDirServerInfoDict(string parentDirPath)
+        {
             Dictionary<string, FileInfoTransferContainer> infoDict = new Dictionary<string, FileInfoTransferContainer>();
-            
+
             List<string> resourceNames = Directory.GetDirectories(parentDirPath)
                 .Select(dirPath => new DirectoryInfo(dirPath).Name).ToList();
-            
-            foreach (string resourceName in resourceNames) {                
+
+            foreach (string resourceName in resourceNames) {
                 string resourceDirPath = Path.Combine(parentDirPath, resourceName);
+
                 List<string> versions = Directory.GetDirectories(resourceDirPath)
                     .Select(path => new DirectoryInfo(path).Name).ToList();
 
@@ -62,7 +67,7 @@ namespace ServerResourceDirNS
 
                 // first item in sorted list is latest version
                 string latestVersion = versions[0];
-                
+
                 string resourceFilePath = Path.Combine(
                     parentDirPath,
                     resourceName,
@@ -79,17 +84,20 @@ namespace ServerResourceDirNS
             return infoDict;
         }
 
-        private FileStreamResult getDirFileStreamResult(string parentDirPath, string resourceName, string version) {
+        private FileStreamResult getDirFileStreamResult(string parentDirPath, string resourceName, string version)
+        {
             string filePath = Path.Combine(parentDirPath, resourceName, version, resourceName);
-            System.Console.WriteLine(filePath);
+
             return new FileStreamResult(
                 File.OpenRead(filePath),
                 getMimeType(new FileInfo(filePath))
             );
         }
 
-        private class DepsFileJson {
-            public class DepsFileEntry {
+        private class DepsFileJson
+        {
+            public class DepsFileEntry
+            {
                 public string key;
                 public string version;
 
@@ -99,7 +107,7 @@ namespace ServerResourceDirNS
                     this.version = version;
                 }
             }
-            
+
             public List<DepsFileEntry> code;
             public List<DepsFileEntry> data;
             public List<DepsFileEntry> model;
@@ -129,7 +137,7 @@ namespace ServerResourceDirNS
                 resourceName + depsFileExtension
             );
 
-            
+
             string depsJson = File.ReadAllText(depsFilePath);
             DepsFileJson fileJson = JsonConvert.DeserializeObject<DepsFileJson>(depsJson);
 
@@ -149,7 +157,7 @@ namespace ServerResourceDirNS
                     (dataUninvestigated, infoContainer.dataDeps, fileJson.data, dataDirPath),
                     (modelUninvestigated, infoContainer.modelDeps, fileJson.model, modelDirPath),
                 };
-                
+
                 bool noMoreUninvestigated = true;
                 foreach (var (resourceUninvestigated, infoContainerResourceDeps, directResourceDeps, resourceDirPath) in resourceGroups)
                 {
@@ -163,7 +171,7 @@ namespace ServerResourceDirNS
                             directResourceDeps.Any(v => v.key == investigating.key),
                             resourceFileSize(resourceDirPath, investigating.version, investigating.key)
                         );
-                        
+
                         dependenciesOfDependencyPath = Path.Combine(
                             resourceDirPath,
                             investigating.key,
@@ -175,7 +183,7 @@ namespace ServerResourceDirNS
                         break;
                     }
                 }
-                
+
                 if (noMoreUninvestigated)
                 {
                     break;
@@ -212,7 +220,7 @@ namespace ServerResourceDirNS
                 .Select(path => new DirectoryInfo(path).Name).ToList();
 
             versions.Sort(compareVersions);
-            
+
             return new ResourceVersionsInfoContainer(
                 versions,
                 versions[0] // first item in sorted list is the newest version
@@ -238,7 +246,7 @@ namespace ServerResourceDirNS
             {
                 Directory.CreateDirectory(resourceDir);
             }
-            
+
             string resourceVersionDir = Path.Combine(resourceDir, version);
             if (!Directory.Exists(resourceVersionDir))
             {
@@ -256,7 +264,7 @@ namespace ServerResourceDirNS
 
             if (File.Exists(resourceFilePath)) File.Delete(resourceFilePath);
             if (File.Exists(resourceDepsPath)) File.Delete(resourceFilePath);
-            
+
             using (Stream resourceFileStream = File.OpenWrite(resourceFilePath))
             using (var resourceDepsStream = new StreamWriter(File.OpenWrite(resourceDepsPath)))
             {
@@ -273,7 +281,7 @@ namespace ServerResourceDirNS
                 resourceDepsStream.Write(serializedDeps);
             }
         }
-        
+
         public ServerResourceDir(string pathArg)
         {
             root = pathArg;

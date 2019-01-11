@@ -67,25 +67,17 @@ namespace RepositoryServer.Controllers
             string resourceType,
             string resourceName,
             string version,
-            [FromQuery] string deps,
-            [FromQuery] string dataDeps,
-            [FromQuery] string modelDeps)
+            [FromQuery] string deps)
         {
-            System.Console.WriteLine("RECEIVED VALUES");
-            System.Console.WriteLine(resourceType);
-            System.Console.WriteLine(resourceName);
-            System.Console.WriteLine(version);
-            System.Console.WriteLine(deps);
-
             PublishDepsInfoContainer depsInfo = JsonConvert.DeserializeObject<PublishDepsInfoContainer>(deps);
-            
+
             Stream requestFileStream = Request.Body;
 
             // if (resourceType == "code") return serverDir
             if (resourceType == "code") serverDir.addCodeResource(resourceName, version, depsInfo, requestFileStream);
             if (resourceType == "data") serverDir.addDataResource(resourceName, version, depsInfo, requestFileStream);
             if (resourceType == "model") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
-            
+
             return Ok();
         }
     }

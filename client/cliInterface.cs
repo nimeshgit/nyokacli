@@ -25,22 +25,22 @@ namespace CLIInterfaceNS
 
             internal List<string> columnNames = new List<string>();
             internal List<int> columnWidths = new List<int>();
-            
+
             internal List<List<string>> rows = new List<List<string>>();
-            
+
             public PrintTable()
             {
                 // empty
             }
-            
+
             // To enable object initializer
-            public void Add(string columnName, int columnWidth)
+            public void Add(string columnName, int minWidth)
             {
                 columnNames.Add(columnName);
-                int maxWidth = columnName.Length > columnWidth ? columnName.Length : columnWidth;
+                int maxWidth = columnName.Length > minWidth ? columnName.Length : minWidth;
                 columnWidths.Add(maxWidth);
             }
-            
+
             // To enable object initializer
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
             {
@@ -49,10 +49,13 @@ namespace CLIInterfaceNS
 
             public void addRow(params string[] row)
             {
-                if (row.Length != this.columnWidths.Count) throw new ColumnCountException();
-                
+                if (row.Length != this.columnWidths.Count)
+                {
+                    throw new ColumnCountException();
+                }
+
                 this.rows.Add(row.ToList());
-                
+
                 // expand table if necessary
                 for (int i = 0; i < columnWidths.Count; i++) {
                     if (row[i].Length > columnWidths[i]) {
@@ -69,7 +72,7 @@ namespace CLIInterfaceNS
             System.Console.ResetColor();
             System.Console.Write("\n");
         }
-        
+
         public static void logError(string message)
         {
             System.Console.BackgroundColor = errorBackroundColor;
@@ -82,12 +85,12 @@ namespace CLIInterfaceNS
         public static bool askYesOrNo(string question)
         {
             bool? response = null;
-            
+
             while (!response.HasValue)
             {
                 System.Console.Write(question + " [y/n] ");
                 string input = System.Console.ReadLine();
-                
+
                 if (input.Trim().ToLower() == "y")
                 {
                     response = true;
@@ -113,19 +116,23 @@ namespace CLIInterfaceNS
         public static void logTable(PrintTable table)
         {
             string horizontalLine = "";
-            
+
             for (int col = 0; col < table.columnNames.Count; col++)
             {
                 System.Console.ForegroundColor = tableFrameColor;
-                
-                if (col != 0) System.Console.Write("|");
+
+                if (col != 0)
+                {
+                    System.Console.Write("|");
+                }
 
                 System.Console.ForegroundColor = tableHeaderColor;
-                
+
                 System.Console.Write(table.columnNames[col].PadRight(table.columnWidths[col]));
             }
+
             System.Console.Write("\n");
-            
+
             for (int col = 0; col < table.columnNames.Count; col++)
             {
                 if (col != 0) horizontalLine += "+";
@@ -141,12 +148,13 @@ namespace CLIInterfaceNS
                 for (int col = 0; col < table.columnWidths.Count; col++)
                 {
                     System.Console.ForegroundColor = tableFrameColor;
-                    
+
                     if (col != 0) System.Console.Write("|");
 
                     System.Console.ResetColor();
                     System.Console.Write(row[col].PadRight(table.columnWidths[col]));
                 }
+
                 System.Console.Write("\n");
             }
         }

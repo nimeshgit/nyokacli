@@ -230,16 +230,19 @@ namespace nyoka_cli
             string version;
             string resourceName;
 
+            // If there is no @ symbol in the string to separate name from version
             if (splitByAt.Length == 1)
             {
                 version = null; // redundant?
                 resourceName = splitByAt[0];
             }
+            // If there is one @ symbol in the string to separate name from version
             else if (splitByAt.Length == 2)
             {
                 version = splitByAt[1];
                 resourceName = splitByAt[0];
             }
+            // If there is more than one @ symbol in the string
             else
             {
                 throw new ArgumentProcessException(

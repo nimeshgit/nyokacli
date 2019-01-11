@@ -8,7 +8,7 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
-// @TODO add possibility of making 
+// @TODO add possibility of making
 // @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
@@ -19,12 +19,14 @@ namespace PackageManagerNS
             public string resourceName;
             public string version;
             public ResourceType resourceType;
+
             public ResourceIdentifier(string resourceName, ResourceType resourceType)
             {
                 this.resourceName = resourceName;
                 this.resourceType = resourceType;
                 this.version = null;
             }
+
             public ResourceIdentifier(string resourceName, ResourceType resourceType, string version)
             {
                 this.resourceName = resourceName;
@@ -32,13 +34,13 @@ namespace PackageManagerNS
                 this.version = version;
             }
         }
-        
+
         private static string bytesToString(long bytes)
         {
             const long KSize = 1024;
             const long MSize = 1048576;
             const long GSize = 1073741824;
-            const long TSize = 1099511627776;	
+            const long TSize = 1099511627776;
 
             long unit;
             string suffix;
@@ -75,7 +77,7 @@ namespace PackageManagerNS
 
             return $"{numToString} {suffix}";
         }
-        
+
         public static void initDirectories()
         {
             try
@@ -109,7 +111,7 @@ namespace PackageManagerNS
                     );
                     return;
                 }
-                
+
                 using (Stream resourceServerStream = NetworkUtils.getResource(resourceType, resourceName, version))
                 using (FileStream resourceFileStream = FSOps.createResourceFile(resourceType, resourceName))
                 using (StreamWriter versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
@@ -130,14 +132,14 @@ namespace PackageManagerNS
                 CLIInterface.logError($"File System Error: " + ex.Message);
             }
         }
-        
+
         public static void addPackage(ResourceIdentifier resourceDescription)
         {
             try
             {
                 ResourceType resourceType = resourceDescription.resourceType;
                 string resourceName = resourceDescription.resourceName;
-                
+
                 // check if the resource is available from the server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
                 if (!availableResources.ContainsKey(resourceName))
@@ -148,7 +150,7 @@ namespace PackageManagerNS
 
                 string version = resourceDescription.version; // possible null
                 var serverVersionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                
+
                 if (version == null)
                 {
                     version = serverVersionInfo.latestVersion;
@@ -202,13 +204,13 @@ namespace PackageManagerNS
                 }
 
                 ResourceDependencyInfoContainer dependencies = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
-                
+
                 var depDescriptions = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
                     { ResourceType.Code, dependencies.codeDeps },
                     { ResourceType.Data, dependencies.dataDeps },
                     { ResourceType.Model, dependencies.modelDeps },
                 };
-                
+
                 bool downloadDependencies = false;
 
                 // if there package has any dependencies
@@ -352,9 +354,9 @@ namespace PackageManagerNS
                         {
                             version = "Unknown version";
                         }
-                        
+
                         long fileSize = FSOps.getResourceSize(resourceType, resourceName);
-                        
+
                         table.addRow(
                             resourceType.ToString(),
                             resourceName,
@@ -363,7 +365,7 @@ namespace PackageManagerNS
                         );
                     }
                 }
-                
+
                 CLIInterface.logTable(table);
             }
             catch (FSOps.FSOpsException ex)
@@ -410,7 +412,7 @@ namespace PackageManagerNS
                 }
 
                 CLIInterface.logLine($"Showing dependencies of {resourceName}, version {version}");
-                
+
                 ResourceDependencyInfoContainer deps = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
@@ -432,7 +434,7 @@ namespace PackageManagerNS
                     { ResourceType.Data, deps.dataDeps },
                     { ResourceType.Model, deps.modelDeps },
                 };
-                
+
                 foreach (var (dependenciesType, descriptions) in showDepDict.Select(x => (x.Key, x.Value)))
                 {
                     foreach (var (dependencyName, dependencyDescription) in descriptions.Select(x => (x.Key, x.Value)))
@@ -446,7 +448,7 @@ namespace PackageManagerNS
                         );
                     }
                 }
-                
+
                 CLIInterface.logTable(table);
             }
             catch (FSOps.FSOpsException ex)
@@ -466,7 +468,7 @@ namespace PackageManagerNS
                 List<ResourceType> resourcesToList = listType.HasValue ?
                     new List<ResourceType> { listType.Value } :
                     new List<ResourceType> { ResourceType.Code, ResourceType.Data, ResourceType.Model };
-                
+
                 CLIInterface.PrintTable printTable = new CLIInterface.PrintTable {
                     {"Type", 7},
                     {"Name of Resource", 20},
@@ -478,7 +480,7 @@ namespace PackageManagerNS
                 foreach (ResourceType resourceType in resourcesToList)
                 {
                     var availableResources = NetworkUtils.getAvailableResources(resourceType);
-                    
+
                     foreach (string resourceName in availableResources.Keys.OrderBy(k => k))
                     {
                         string localVersionStr;
@@ -498,7 +500,7 @@ namespace PackageManagerNS
                         {
                             localVersionStr = "Not present";
                         }
-                        
+
                         printTable.addRow(
                             resourceType.ToString(),
                             resourceName,
@@ -508,7 +510,7 @@ namespace PackageManagerNS
                         );
                     }
                 }
-                
+
                 CLIInterface.logTable(printTable);
             }
             catch (NetworkUtils.NetworkUtilsException ex)
@@ -531,14 +533,14 @@ namespace PackageManagerNS
                 {
                     if (depDescription.version == null)
                     {
-                        
+
                         CLIInterface.logError(
                             "The versions of dependencies must be supplied. For example, " +
                             "\"dependency.csv\" does not include version, \"dependency.csv@1.2.3\" does."
                         );
                         return;
                     }
-                    
+
                     var publishDepDescription = new PublishDepsInfoContainer.PublishDepDescription(depDescription.version);
                     if (depDescription.resourceType == ResourceType.Code)
                     {
@@ -553,12 +555,6 @@ namespace PackageManagerNS
                         publishDepsInfo.modelDeps[depDescription.resourceName] = publishDepDescription;
                     }
                 }
-
-                // var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
-                //     { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
-                //     { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
-                //     { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
-                // };
 
                 string resourceName = resourceDescription.resourceName;
                 ResourceType resourceType = resourceDescription.resourceType;
@@ -585,7 +581,7 @@ namespace PackageManagerNS
                 }
 
                 var resourcesOnServer = NetworkUtils.getAvailableResources(resourceType);
-                
+
                 // If this resource already exists on server
                 if (resourcesOnServer.ContainsKey(resourceName))
                 {
@@ -614,7 +610,7 @@ namespace PackageManagerNS
 
                 CLIInterface.logLine("Opening file.");
                 FileStream fileStream = FSOps.readResourceFile(resourceType, resourceName);
-                
+
                 CLIInterface.logLine("Uploading file.");
                 NetworkUtils.publishResource(
                     fileStream,
