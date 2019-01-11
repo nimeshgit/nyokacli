@@ -16,13 +16,21 @@ namespace FSOpsNS
             {
             }
         }
-        private static readonly string codeDirName = "code";
-        private static readonly string dataDirName = "data";
-        private static readonly string modelDirName = "model";
+        private static readonly string codeDirName = "Code";
+        private static readonly string dataDirName = "Data";
+        private static readonly string modelDirName = "Model";
         private static readonly string nyokaFolderName = ".nyoka";
 
         private static readonly string nyokaVersionExtension = ".version";
         private static readonly string[] dirNames = new string[] { codeDirName, dataDirName, modelDirName };
+
+        private static string resourceDirPath(ResourceType resourceType)
+        {
+            if (resourceType == ResourceType.Code) return codeDirName;
+            if (resourceType == ResourceType.Data) return dataDirName;
+            if (resourceType == ResourceType.Model) return modelDirName;
+            throw new FSOpsException($"No matching resource directory for resource type {resourceType}");
+        }
         
         public static bool hasNecessaryDirs()
         {
@@ -116,8 +124,8 @@ namespace FSOpsNS
         {
             try
             {
-                string resourceFilePath = Path.Join(resourceType.ToString().ToLower(), resourceName);
-                string resourceVersionFilePath = Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension);
+                string resourceFilePath = Path.Join(resourceDirPath(resourceType), resourceName);
+                string resourceVersionFilePath = Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension);
 
                 if (File.Exists(resourceFilePath))
                 {
@@ -139,7 +147,7 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Exists(Path.Join(resourceType.ToString().ToLower(), resourceName));
+                return File.Exists(Path.Join(resourceDirPath(resourceType), resourceName));
             }
             catch (System.Exception)
             {
@@ -151,7 +159,7 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Exists(Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension));
+                return File.Exists(Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension));
             }
             catch (System.Exception)
             {
@@ -163,11 +171,11 @@ namespace FSOpsNS
         {
             try
             {
-                return new DirectoryInfo(resourceType.ToString().ToLower().ToLower()).EnumerateFiles().Select(file => file.Name);
+                return new DirectoryInfo(resourceDirPath(resourceType)).EnumerateFiles().Select(file => file.Name);
             }
             catch (System.Exception)
             {
-                throw new FSOpsException($"Failed to get list of {resourceType.ToString().ToLower().ToLower()} resources from file system");
+                throw new FSOpsException($"Failed to get list of {resourceType.ToString()} resources from file system");
             }
         }
 
@@ -175,7 +183,7 @@ namespace FSOpsNS
         {
             try
             {
-                return File.Create(Path.Join(resourceType.ToString().ToLower(), resourceName));
+                return File.Create(Path.Join(resourceDirPath(resourceType), resourceName));
             }
             catch (System.Exception)
             {
@@ -187,7 +195,7 @@ namespace FSOpsNS
         {
             try
             {
-                string filePath = Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension);
+                string filePath = Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension);
                 if  (File.Exists(filePath))
                 {
                     File.Delete(filePath);
@@ -205,7 +213,7 @@ namespace FSOpsNS
         {
             try
             {
-                return File.ReadAllText(Path.Join(resourceType.ToString().ToLower(), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
+                return File.ReadAllText(Path.Join(resourceDirPath(resourceType), nyokaFolderName, resourceName + nyokaVersionExtension)).Trim();
             }
             catch (System.Exception)
             {
@@ -217,30 +225,19 @@ namespace FSOpsNS
         {
             try
             {
-                return new FileInfo(Path.Join(resourceType.ToString().ToLower(), resourceName)).Length;
+                return new FileInfo(Path.Join(resourceDirPath(resourceType), resourceName)).Length;
             }
             catch (System.Exception)
             {
                 throw new FSOpsException($"Failed to determine file size of file for {resourceType.ToString().ToLower()} resource {resourceName}");
             }
         }
-        // public static bool checkPublishFileExists(string resourceName)
-        // {
-        //     try
-        //     {
-        //         return File.Exists(resourceName);
-        //     }
-        //     catch (System.Exception)
-        //     {
-        //         throw new FSOpsException($"Failed to check for existence of file {resourceName}");
-        //     }
-        // }
 
         public static FileStream readResourceFile(ResourceType resourceType, string fileName)
         {
             try
             {
-                string filePath = Path.Join(resourceType.ToString().ToLower(), fileName);
+                string filePath = Path.Join(resourceDirPath(resourceType), fileName);
                 return File.OpenRead(filePath);
             }
             catch (System.Exception)
