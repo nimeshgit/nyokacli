@@ -471,18 +471,19 @@ namespace PackageManagerNS
                             }
                             else
                             {
-                                localVersionStr = "No version information found";
+                                localVersionStr = "Unknown version";
                             }
                         }
                         else
                         {
                             localVersionStr = "Not present";
                         }
+                        
                         printTable.addRow(
                             resourceType.ToString(),
                             resourceName,
                             availableResources[resourceName].versionStr,
-                            resourceExistsLocally ? FSOps.getResourceVersion(resourceType, resourceName) : "Not Present",
+                            localVersionStr,
                             bytesToString(availableResources[resourceName].byteCount)
                         );
                     }
