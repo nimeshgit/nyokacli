@@ -22,22 +22,15 @@ namespace nyoka_cli
         public string resourceStr {get;set;}
         
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example(
+                "Add a data resource",
+                new AddOptions
                 {
-                    new Example(
-                        "Add a data resource",
-                        new AddOptions
-                        {
-                            resourceStr = "example_data_resource_name.json"
-                        }
-                    )
-                };
-            }
-        }
+                    resourceStr = "example_data_resource_name.json"
+                }
+            )
+        };
     }
 
     [Verb("remove", HelpText = "Remove resource")]
@@ -48,22 +41,15 @@ namespace nyoka_cli
 
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example(
+                "Remove a data resource",
+                new RemoveOptions
                 {
-                    new Example(
-                        "Remove a data resource",
-                        new RemoveOptions
-                        {
-                            resourceStr = "example_model_resource_name.csv"
-                        }
-                    )
-                };
-            }
-        }
+                    resourceStr = "example_model_resource_name.csv"
+                }
+            )
+        };
     }
 
     [Verb("list", HelpText = "List packages")]
@@ -73,26 +59,19 @@ namespace nyoka_cli
         public string resourceType {get;set;}
 
         [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
-        public static IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example(
+                "List all resources",
+                new ListOptions {}
+            ),
+            new Example(
+                "List all model resources",
+                new ListOptions
                 {
-                    new Example(
-                        "List all resources",
-                        new ListOptions {}
-                    ),
-                    new Example(
-                        "List all model resources",
-                        new ListOptions
-                        {
-                            resourceType = "model"
-                        }
-                    )
-                };
-            }
-        }
+                    resourceType = "model"
+                }
+            )
+        };
     }
 
     [Verb("available", HelpText = "List available packages")]
@@ -101,25 +80,19 @@ namespace nyoka_cli
         [Value(0, Required = false, HelpText = ConstStrings.RESOURCE_TYPE_HINT)]
         public string resourceType {get;set;}
 
-        public static IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
-                {
-                    new Example(
-                        "List all available resources",
-                        new AvailableOptions {}
-                    ),
-                    new Example(
-                        "List all available model resources",
-                        new AvailableOptions {
-                            resourceType = "model"
-                        }
-                    )
-                };
-            }
-        }
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example(
+                "List all available resources",
+                new AvailableOptions {}
+            ),
+            new Example(
+                "List all available model resources",
+                new AvailableOptions {
+                    resourceType = "model"
+                }
+            )
+        };
     }
 
     [Verb("dependencies", HelpText = "List dependencies of resource")]
@@ -131,57 +104,23 @@ namespace nyoka_cli
         [Value(2, Required = false, HelpText = "Resource version")]
         public string version {get;set;} = null;
 
-        public static IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
-                {
-                    new Example(
-                        "List the dependencies of a locally downloaded code resource",
-                        new DependenciesOptions {
-                            resourceName = "some_local_resource_name.py"
-                        }
-                    ),
-                    new Example(
-                        "List the dependencies of a model resource",
-                        new DependenciesOptions {
-                            resourceName = "name_of_server_model.pmml",
-                            version = "1.2.3",
-                        }
-                    )
-                };
-            }
-        }
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example(
+                "List the dependencies of a locally downloaded code resource",
+                new DependenciesOptions {
+                    resourceName = "some_local_resource_name.py"
+                }
+            ),
+            new Example(
+                "List the dependencies of a model resource",
+                new DependenciesOptions {
+                    resourceName = "name_of_server_model.pmml",
+                    version = "1.2.3",
+                }
+            )
+        };
     }
-
-    // [Verb("pruneto", HelpText = "Prune the given resource type to the provided resources")]
-    // class PruneToOptions
-    // {
-    //     [Option("code", Separator=',', HelpText = "code resource(s) to keep, separated by commas")]
-    //     public IEnumerable<string> keepCode {get;set;}
-
-    //     [Option("model", Separator=',', HelpText = "model resource(s) to keep, separated by commas")]
-    //     public IEnumerable<string> keepModel {get;set;}
-
-    //     [Option("data", Separator=',', HelpText = "data resource(s) to keep, separated by commas")]
-    //     public IEnumerable<string> keepData {get;set;}
-
-    //     public IEnumerable<Example> Examples
-    //     {
-    //         get
-    //         {
-    //             return new List<Example>()
-    //             {
-    //                 new Example("Keep a code resource and two model resources", new PruneToOptions {
-    //                     keepCode= new string[] {"some_code.py"},
-    //                     keepModel= new string[] {"model1.pmml", "model2.pmml"},
-    //                     keepData= new string[] {},
-    //                 }),
-    //             };
-    //         }
-    //     }
-    // }
 
     [Verb("publish", HelpText = "Publish a resource to server")]
     class PublishOptions
@@ -192,22 +131,17 @@ namespace nyoka_cli
         [Option("deps", HelpText = "Dependencies of this package, separated by spaces. Example: code.py@1.2.3 data.csv@1.0.0")]
         public IEnumerable<string> deps {get;set;}
 
-        public IEnumerable<Example> Examples
-        {
-            get
-            {
-                return new List<Example>()
-                {
-                    new Example("Publish code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
-                        resourceStr = "code_file.ipynb@1.2.3",
-                    }),
-                    new Example("Publish model1.pmml version 10.2.3 with a data dependency called dataset.json, version 1.2.3", new PublishOptions {
-                        resourceStr = "model1.pmml@10.2.3",
-                        deps = new string[] {"dataset.json@1.2.3"},
-                    }),
-                };
-            }
-        }
+        [Usage(ApplicationAlias = ConstStrings.APPLICATION_ALIAS)]
+        public static IEnumerable<Example> Examples => new List<Example> {
+            new Example("Publish code_file.ipynb version 1.2.3 with no dependencies", new PublishOptions {
+                resourceStr = "code_file.ipynb@1.2.3",
+                deps = new string[] {},
+            }),
+            new Example("Publish model1.pmml version 10.2.3 with a data dependency called dataset.json, version 1.2.3", new PublishOptions {
+                resourceStr = "model1.pmml@10.2.3",
+                deps = new string[] {"dataset.json@1.2.3"},
+            }),
+        };
     }
 
     class Program
@@ -389,13 +323,6 @@ namespace nyoka_cli
                         CLIInterface.logError(ex.Message);
                     }
                 })
-                // .WithParsed<PruneToOptions>(opts => {
-                //     PackageManager.pruneTo(
-                //       opts.keepCode.ToList(),
-                //       opts.keepData.ToList(),
-                //       opts.keepModel.ToList()
-                //     );
-                // })
                 .WithParsed<PublishOptions>(opts => {
                     try
                     {
