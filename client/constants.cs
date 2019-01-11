@@ -1,7 +1,7 @@
 
 namespace Constants
 {
-    public enum ResourceType { code, data, model }
+    public enum ResourceType { Code, Data, Model }
     public static class ConstStrings
     {
         internal const string RESOURCE_TYPE_HINT = "Resource Type: \"code\", \"data\" or \"model\"";

@@ -222,18 +222,18 @@ namespace nyoka_cli
 
         private static ResourceType parseResourceType(string type)
         {
-            if (type.ToLower() == "model") return ResourceType.model;
-            else if (type.ToLower() == "data") return ResourceType.data;
-            else if (type.ToLower() == "code") return ResourceType.code;
+            if (type.ToLower() == "model") return ResourceType.Model;
+            else if (type.ToLower() == "data") return ResourceType.Data;
+            else if (type.ToLower() == "code") return ResourceType.Code;
             else throw new ArgumentProcessException($"Invalid resource type \"{type}\"");
         }
         
         private static ResourceType inferResourceTypeFromResourceName(string resourceName)
         {
             try{
-                if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.code;
-                if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.data;
-                if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.model;
+                if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.Code;
+                if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.Data;
+                if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.Model;
                 throw new System.Exception();
             }
             catch (System.Exception)

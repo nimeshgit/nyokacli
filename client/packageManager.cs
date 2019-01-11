@@ -195,9 +195,9 @@ namespace PackageManagerNS
                 ResourceDependencyInfoContainer dependencies = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
                 
                 var depDescriptions = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
-                    { ResourceType.code, dependencies.codeDeps },
-                    { ResourceType.data, dependencies.dataDeps },
-                    { ResourceType.model, dependencies.modelDeps },
+                    { ResourceType.Code, dependencies.codeDeps },
+                    { ResourceType.Data, dependencies.dataDeps },
+                    { ResourceType.Model, dependencies.modelDeps },
                 };
                 
                 bool downloadDependencies = false;
@@ -311,7 +311,7 @@ namespace PackageManagerNS
 
                 List<ResourceType> resourcesToList = listType.HasValue ?
                     new List<ResourceType> { listType.Value } :
-                    new List<ResourceType> { ResourceType.code, ResourceType.data, ResourceType.model };
+                    new List<ResourceType> { ResourceType.Code, ResourceType.Data, ResourceType.Model };
 
                 foreach (ResourceType resourceType in resourcesToList)
                 {
@@ -384,15 +384,15 @@ namespace PackageManagerNS
                 };
 
                 var availableResourcesInfo = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
-                    { ResourceType.code, NetworkUtils.getAvailableResources(ResourceType.code) },
-                    { ResourceType.data, NetworkUtils.getAvailableResources(ResourceType.data) },
-                    { ResourceType.model, NetworkUtils.getAvailableResources(ResourceType.model) },
+                    { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
+                    { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
+                    { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
                 };
 
                 var showDepDict = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>>() {
-                    { ResourceType.code, deps.codeDeps },
-                    { ResourceType.data, deps.dataDeps },
-                    { ResourceType.model, deps.modelDeps },
+                    { ResourceType.Code, deps.codeDeps },
+                    { ResourceType.Data, deps.dataDeps },
+                    { ResourceType.Model, deps.modelDeps },
                 };
                 
                 foreach (var (dependenciesType, descriptions) in showDepDict.Select(x => (x.Key, x.Value)))
@@ -427,7 +427,7 @@ namespace PackageManagerNS
             {
                 List<ResourceType> resourcesToList = listType.HasValue ?
                     new List<ResourceType> { listType.Value } :
-                    new List<ResourceType> { ResourceType.code, ResourceType.data, ResourceType.model };
+                    new List<ResourceType> { ResourceType.Code, ResourceType.Data, ResourceType.Model };
                 
                 CLIInterface.PrintTable printTable = new CLIInterface.PrintTable {
                     {"Type", 7},
@@ -484,24 +484,24 @@ namespace PackageManagerNS
                     }
                     
                     var publishDepDescription = new PublishDepsInfoContainer.PublishDepDescription(depDescription.version);
-                    if (depDescription.resourceType == ResourceType.code)
+                    if (depDescription.resourceType == ResourceType.Code)
                     {
                         publishDepsInfo.codeDeps[depDescription.resourceName] = publishDepDescription;
                     }
-                    else if (depDescription.resourceType == ResourceType.data)
+                    else if (depDescription.resourceType == ResourceType.Data)
                     {
                         publishDepsInfo.dataDeps[depDescription.resourceName] = publishDepDescription;
                     }
-                    else if (depDescription.resourceType == ResourceType.model)
+                    else if (depDescription.resourceType == ResourceType.Model)
                     {
                         publishDepsInfo.modelDeps[depDescription.resourceName] = publishDepDescription;
                     }
                 }
 
                 var allAvailableResources = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
-                    { ResourceType.code, NetworkUtils.getAvailableResources(ResourceType.code) },
-                    { ResourceType.data, NetworkUtils.getAvailableResources(ResourceType.data) },
-                    { ResourceType.model, NetworkUtils.getAvailableResources(ResourceType.model) },
+                    { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
+                    { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
+                    { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
                 };
 
                 string resourceName = resourceDescription.resourceName;
