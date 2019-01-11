@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Web;
 using Newtonsoft.Json;
 
-namespace example_server.Controllers
+namespace RepositoryServer.Controllers
 {
     [Route("api")]
     [ApiController]

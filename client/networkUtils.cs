@@ -25,7 +25,7 @@ namespace NetworkUtilsNS
 
         public static System.IO.Stream getResource(ResourceType resourceType, string resourceName, string version)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/file";
+            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/file";
             
             try
             {
@@ -40,7 +40,7 @@ namespace NetworkUtilsNS
 
         public static ResourceVersionsInfoContainer getResourceVersions(ResourceType resourceType, string resourceName)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString()}/{resourceName}/versions";
+            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions";
 
             try
             {
@@ -61,7 +61,7 @@ namespace NetworkUtilsNS
 
         public static ResourceDependencyInfoContainer getResourceDependencies(ResourceType resourceType, string resourceName, string version)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/dependencies";
+            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/dependencies";
 
             try
             {
@@ -81,7 +81,7 @@ namespace NetworkUtilsNS
 
         public static Dictionary<string, FileInfoTransferContainer> getAvailableResources(ResourceType resourceType)
         {
-            string url = $"{getApiUrl}/{resourceType.ToString()}";
+            string url = $"{getApiUrl}/{resourceType.ToString().ToLower()}";
 
             try
             {
@@ -110,7 +110,7 @@ namespace NetworkUtilsNS
 
             queryString["deps"] = JsonConvert.SerializeObject(publishDepsInfo);
 
-            string url = $"{postApiUrl}/{resourceType.ToString()}/{resourceName}/versions/{version}/post?{queryString.ToString()}";
+            string url = $"{postApiUrl}/{resourceType.ToString().ToLower()}/{resourceName}/versions/{version}/post?{queryString.ToString()}";
 
             try
             {

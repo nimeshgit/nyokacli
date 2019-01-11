@@ -37,7 +37,8 @@ namespace CLIInterfaceNS
             public void Add(string columnName, int columnWidth)
             {
                 columnNames.Add(columnName);
-                columnWidths.Add(columnWidth);
+                int maxWidth = columnName.Length > columnWidth ? columnName.Length : columnWidth;
+                columnWidths.Add(maxWidth);
             }
             
             // To enable object initializer
