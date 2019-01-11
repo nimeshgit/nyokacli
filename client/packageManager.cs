@@ -217,11 +217,11 @@ namespace PackageManagerNS
                 if (depDescriptions.Any(kvPair => kvPair.Value.Count != 0))
                 {
                     CLIInterface.PrintTable table = new CLIInterface.PrintTable {
-                        { "Resource Type", 13 },
-                        { "Dep. Type", 9 },
-                        { "Dependency Name", 20 },
-                        { "Version", 15 },
-                        { "Size", 10 },
+                        {"Resource Type", 13},
+                        {"Dependency Type", 15},
+                        {"Name of Resource", 15},
+                        {"Resource Version", 15},
+                        {"File Size", 10},
                     };
 
                     foreach (var (depResourceType, deps) in depDescriptions.Select(x => (x.Key, x.Value)))
@@ -326,7 +326,7 @@ namespace PackageManagerNS
             {
                 if (!FSOps.hasNecessaryDirs())
                 {
-                    CLIInterface.logError($"Missing resource directories or files. Try running {ConstStrings.APPLICATION_ALIAS} init?");
+                    CLIInterface.logError($"Missing some or all resource directories in current directory. Try running {ConstStrings.APPLICATION_ALIAS} init?");
                     return;
                 }
 
@@ -334,7 +334,7 @@ namespace PackageManagerNS
                     {"Type", 7},
                     {"Name of Resource", 20},
                     {"Version", 15},
-                    {"Size", 10},
+                    {"File Size", 10},
                 };
 
                 List<ResourceType> resourcesToList = listType.HasValue ?
@@ -417,10 +417,10 @@ namespace PackageManagerNS
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
                     {"Resource Type", 13},
-                    {"Dep. Type", 9},
-                    {"Dependency Name", 20},
-                    {"Version", 15},
-                    {"Size", 10},
+                    {"Dependency Type", 15},
+                    {"Name of Resource", 15},
+                    {"Resource Version", 15},
+                    {"File Size", 10},
                 };
 
                 var availableResourcesInfo = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
@@ -474,7 +474,7 @@ namespace PackageManagerNS
                     {"Name of Resource", 20},
                     {"Latest Version", 15},
                     {"Local Version", 1},
-                    {"Size", 10},
+                    {"File Size", 10},
                 };
 
                 foreach (ResourceType resourceType in resourcesToList)
