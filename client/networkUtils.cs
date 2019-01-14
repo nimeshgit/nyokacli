@@ -1,6 +1,5 @@
 using Constants;
 using System.Collections.Generic;
-using Newtonsoft.Json;
 using InfoTransferContainers;
 using System.Linq;
 
@@ -65,8 +64,9 @@ namespace NetworkUtilsNS
                 System.IO.Stream stream = client.GetStreamAsync(url).Result;
                 return stream;
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to get file for {resourceType} resource {resourceName}"
                 );
@@ -77,24 +77,32 @@ namespace NetworkUtilsNS
         {
             string url = resourceVersionsUrl(resourceType, resourceName);
 
+            string serializedInfo;
             try
             {
-                string resourceJson = client.GetStringAsync(url).Result;
-                ResourceVersionsInfoContainer versionsInfo = JsonConvert.DeserializeObject<ResourceVersionsInfoContainer>(resourceJson);
+                serializedInfo = client.GetStringAsync(url).Result;
+                System.Console.WriteLine(serializedInfo);
+            }
+
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine(ex);
+                throw new NetworkUtilsException(
+                    $"Unable to get list of versions of {resourceType} resource {resourceName} from server"
+                );
+            }
+            try
+            {
+                ResourceVersionsInfoContainer versionsInfo = ResourceVersionsInfoContainer.deserialize(serializedInfo);
 
                 return versionsInfo;
             }
-            catch (JsonReaderException)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to process server response to request for " +
                     $"list of versions of {resourceType} resource {resourceName}"
-                );
-            }
-            catch (System.Exception)
-            {
-                throw new NetworkUtilsException(
-                    $"Unable to get list of versions of {resourceType} resource {resourceName} from server"
                 );
             }
         }
@@ -103,39 +111,55 @@ namespace NetworkUtilsNS
         {
             string url = resourceDependenciesUrl(resourceType, resourceName, version);
 
+            string serializedInfo;
+
             try
             {
-                string resourceJson = client.GetStringAsync(url).Result;
-                ResourceDependencyInfoContainer dependencies = JsonConvert.DeserializeObject<ResourceDependencyInfoContainer>(resourceJson);
+                serializedInfo = client.GetStringAsync(url).Result;
+                System.Console.WriteLine(serializedInfo);
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine(ex);
+                throw new NetworkUtilsException("Unable to get list of package dependencies from server");
+            }
+            
+            try
+            {
+                ResourceDependencyInfoContainer dependencies = ResourceDependencyInfoContainer.deserialize(serializedInfo);
                 return dependencies;
             }
-            catch (JsonReaderException)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to process server response to request for list of dependencies");
-            }
-            catch (System.Exception)
-            {
-                throw new NetworkUtilsException("Unable to get list of package dependencies from server");
             }
         }
 
-        public static Dictionary<string, FileInfoTransferContainer> getAvailableResources(ResourceType resourceType)
+        public static AvailableResourcesInfoContainer getAvailableResources(ResourceType resourceType)
         {
             string url = availableResourcesUrl(resourceType);
 
+            string serialized;
             try
             {
-                string jsonArr = client.GetStringAsync(url).Result;
-                Dictionary<string, FileInfoTransferContainer> resources = JsonConvert.DeserializeObject<Dictionary<string, FileInfoTransferContainer>>(jsonArr);
+                serialized = client.GetStringAsync(url).Result;
+                System.Console.WriteLine(serialized);
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine(ex);
+                throw new NetworkUtilsException("Unable to get list of available resources from server");
+            }
+            try
+            {
+                AvailableResourcesInfoContainer resources = AvailableResourcesInfoContainer.deserialize(serialized);
                 return resources;
             }
-            catch (JsonReaderException)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to process server response to available resources request");
-            }
-            catch (System.Exception)
-            {
-                throw new NetworkUtilsException("Unable to get list of available resources from server");
             }
         }
 
@@ -148,7 +172,7 @@ namespace NetworkUtilsNS
         {
             System.Collections.Specialized.NameValueCollection queryString = System.Web.HttpUtility.ParseQueryString(string.Empty);
 
-            queryString["deps"] = JsonConvert.SerializeObject(publishDepsInfo);
+            queryString["deps"] = publishDepsInfo.serialize();
 
             string url = resourcePostUrl(resourceType, resourceName, version) + "?" + queryString.ToString();
 
@@ -176,8 +200,9 @@ namespace NetworkUtilsNS
                     }
                 }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to publish {resourceType} resource {resourceName} to server");
             }
         }

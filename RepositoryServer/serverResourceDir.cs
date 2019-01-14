@@ -50,9 +50,10 @@ namespace ServerResourceDirNS
         private string dataDirPath => $"{root}/Data";
         private string modelDirPath => $"{root}/Model";
 
-        private Dictionary<string, FileInfoTransferContainer> getDirServerInfoDict(string parentDirPath)
+        private AvailableResourcesInfoContainer getDirServerInfoDict(string parentDirPath)
         {
-            Dictionary<string, FileInfoTransferContainer> infoDict = new Dictionary<string, FileInfoTransferContainer>();
+            AvailableResourcesInfoContainer infoContainer = new AvailableResourcesInfoContainer();
+            // Dictionary<string, ResourceDescription> infoDict = new Dictionary<string, ResourceDescription>();
 
             List<string> resourceNames = Directory.GetDirectories(parentDirPath)
                 .Select(dirPath => new DirectoryInfo(dirPath).Name).ToList();
@@ -75,13 +76,13 @@ namespace ServerResourceDirNS
                     resourceName
                 );
 
-                infoDict[resourceName] = new FileInfoTransferContainer(
+                infoContainer.resourceDescriptions[resourceName] = new AvailableResourcesInfoContainer.AvailableResourceDescription(
                     resourceFileSize(parentDirPath, latestVersion, resourceName),
                     latestVersion
                 );
             }
 
-            return infoDict;
+            return infoContainer;
         }
 
         private FileStreamResult getDirFileStreamResult(string parentDirPath, string resourceName, string version)
@@ -295,9 +296,9 @@ namespace ServerResourceDirNS
         public FileStreamResult getDataStream(string fileName, string version) => getDirFileStreamResult(dataDirPath, fileName, version);
         public FileStreamResult getModelStream(string fileName, string version) => getDirFileStreamResult(modelDirPath, fileName, version);
 
-        public Dictionary<string, FileInfoTransferContainer> getCodeServerInfoDict() => getDirServerInfoDict(codeDirPath);
-        public Dictionary<string, FileInfoTransferContainer> getDataServerInfoDict() => getDirServerInfoDict(dataDirPath);
-        public Dictionary<string, FileInfoTransferContainer> getModelServerInfoDict() => getDirServerInfoDict(modelDirPath);
+        public AvailableResourcesInfoContainer getCodeServerInfoDict() => getDirServerInfoDict(codeDirPath);
+        public AvailableResourcesInfoContainer getDataServerInfoDict() => getDirServerInfoDict(dataDirPath);
+        public AvailableResourcesInfoContainer getModelServerInfoDict() => getDirServerInfoDict(modelDirPath);
 
         public ResourceDependencyInfoContainer getCodeResourceDeps(string resourceName, string version) => getDirResourceDeps(codeDirPath, version, resourceName);
         public ResourceDependencyInfoContainer getDataResourceDeps(string resourceName, string version) => getDirResourceDeps(dataDirPath, version, resourceName);

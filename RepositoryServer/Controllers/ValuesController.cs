@@ -10,7 +10,6 @@ using ServerResourceDirNS;
 using System.Web.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Web;
-using Newtonsoft.Json;
 
 namespace RepositoryServer.Controllers
 {
@@ -26,20 +25,20 @@ namespace RepositoryServer.Controllers
         );
 
         [HttpGet("getresources/{resourceType}")]
-        public ActionResult<Dictionary<string, FileInfoTransferContainer>> GetAvailableResources(string resourceType)
+        public ActionResult<string> GetAvailableResources(string resourceType)
         {
-            if (resourceType == "code") return serverDir.getCodeServerInfoDict();
-            if (resourceType == "data") return serverDir.getDataServerInfoDict();
-            if (resourceType == "model") return serverDir.getModelServerInfoDict();
+            if (resourceType == "code") return serverDir.getCodeServerInfoDict().serialize();
+            if (resourceType == "data") return serverDir.getDataServerInfoDict().serialize();
+            if (resourceType == "model") return serverDir.getModelServerInfoDict().serialize();
             throw new FileNotFoundException();
         }
 
         [HttpGet("getresources/{resourceType}/{resourceName}/versions")]
-        public ActionResult<ResourceVersionsInfoContainer> GetResourceVersions(string resourceType, string resourceName)
+        public ActionResult<string> GetResourceVersions(string resourceType, string resourceName)
         {
-            if (resourceType == "code") return serverDir.getCodeVersions(resourceName);
-            if (resourceType == "data") return serverDir.getDataVersions(resourceName);
-            if (resourceType == "model") return serverDir.getModelVersions(resourceName);
+            if (resourceType == "code") return serverDir.getCodeVersions(resourceName).serialize();
+            if (resourceType == "data") return serverDir.getDataVersions(resourceName).serialize();
+            if (resourceType == "model") return serverDir.getModelVersions(resourceName).serialize();
             throw new FileNotFoundException();
         }
 
@@ -53,11 +52,11 @@ namespace RepositoryServer.Controllers
         }
 
         [HttpGet("getresources/{resourceType}/{resourceName}/versions/{version}/dependencies")]
-        public ActionResult<ResourceDependencyInfoContainer> GetDependencies(string resourceType, string resourceName, string version)
+        public ActionResult<string> GetDependencies(string resourceType, string resourceName, string version)
         {
-            if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version);
-            if (resourceType == "data") return serverDir.getDataResourceDeps(resourceName, version);
-            if (resourceType == "model") return serverDir.getModelResourceDeps(resourceName, version);
+            if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version).serialize();
+            if (resourceType == "data") return serverDir.getDataResourceDeps(resourceName, version).serialize();
+            if (resourceType == "model") return serverDir.getModelResourceDeps(resourceName, version).serialize();
             throw new FileNotFoundException();
         }
 
@@ -69,7 +68,7 @@ namespace RepositoryServer.Controllers
             string version,
             [FromQuery] string deps)
         {
-            PublishDepsInfoContainer depsInfo = JsonConvert.DeserializeObject<PublishDepsInfoContainer>(deps);
+            PublishDepsInfoContainer depsInfo = PublishDepsInfoContainer.deserialize(deps);
 
             Stream requestFileStream = Request.Body;
 

@@ -96,7 +96,7 @@ namespace PackageManagerNS
             {
                 // check that resource is on server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
-                if (!availableResources.ContainsKey(resourceName))
+                if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"Could not find {resourceType.ToString()} resource with name {resourceName} on server");
                     return;
@@ -142,7 +142,7 @@ namespace PackageManagerNS
 
                 // check if the resource is available from the server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
-                if (!availableResources.ContainsKey(resourceName))
+                if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"No resource called {resourceName} is available from the server.");
                     return;
@@ -380,7 +380,7 @@ namespace PackageManagerNS
             {
                 // check if this resource exists on server
                 var availableResources = NetworkUtils.getAvailableResources(resourceType);
-                if (!availableResources.ContainsKey(resourceName))
+                if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"{resourceType.ToString()} resource {resourceName} could not be found on server");
                     return;
@@ -423,7 +423,7 @@ namespace PackageManagerNS
                     {"File Size", 10},
                 };
 
-                var availableResourcesInfo = new Dictionary<ResourceType, Dictionary<string, FileInfoTransferContainer>> {
+                var availableResourcesInfo = new Dictionary<ResourceType, AvailableResourcesInfoContainer> {
                     { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
                     { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
                     { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
@@ -444,7 +444,7 @@ namespace PackageManagerNS
                             dependencyDescription.isDirectDependency ? "direct" : "indirect",
                             dependencyName,
                             dependencyDescription.versionStr,
-                            bytesToString(availableResourcesInfo[dependenciesType][dependencyName].byteCount)
+                            bytesToString(availableResourcesInfo[dependenciesType].resourceDescriptions[dependencyName].byteCount)
                         );
                     }
                 }
@@ -481,7 +481,7 @@ namespace PackageManagerNS
                 {
                     var availableResources = NetworkUtils.getAvailableResources(resourceType);
 
-                    foreach (string resourceName in availableResources.Keys.OrderBy(k => k))
+                    foreach (string resourceName in availableResources.resourceDescriptions.Keys.OrderBy(k => k))
                     {
                         string localVersionStr;
                         bool resourceExistsLocally = FSOps.resourceFileExists(resourceType, resourceName);
@@ -504,9 +504,9 @@ namespace PackageManagerNS
                         printTable.addRow(
                             resourceType.ToString(),
                             resourceName,
-                            availableResources[resourceName].versionStr,
+                            availableResources.resourceDescriptions[resourceName].versionStr,
                             localVersionStr,
-                            bytesToString(availableResources[resourceName].byteCount)
+                            bytesToString(availableResources.resourceDescriptions[resourceName].byteCount)
                         );
                     }
                 }
@@ -583,7 +583,7 @@ namespace PackageManagerNS
                 var resourcesOnServer = NetworkUtils.getAvailableResources(resourceType);
 
                 // If this resource already exists on server
-                if (resourcesOnServer.ContainsKey(resourceName))
+                if (resourcesOnServer.resourceDescriptions.ContainsKey(resourceName))
                 {
                     ResourceVersionsInfoContainer serverVersionsInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
 
