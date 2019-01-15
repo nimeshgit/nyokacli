@@ -1,22 +1,30 @@
-A cli for nyoka
+## A cli for nyoka
 
-To debug/run server:
-    Navigate to example_server in terminal
-    execute "dotnet run"
+### To debug/run server
 
-To debug/run client:
-    Navigate to client in terminal
-    execute "dotnet run"
+* Navigate to example_server in terminal
+    
+        dotnet run
 
-To build client to native executable (from inside the client directory):
+### To debug/run client
 
-	* Linux:
+* Navigate to client in terminal
+
+        dotnet run
+
+### To build client to native executable (from inside the client directory)
+
+* Linux:
     
 		dotnet publish -r linux-x64 -c release
 		
-    * Mac:
+* Mac
+
         dotnet publish -r osx-x64 -c release
-    * Windows:
-            haven't tried yet on windows
-    Dotnet may give an error stating that platform linker 'clang-3.9' is not found. In this case, install the latest clang and run "export CppCompilerAndLinker=clang" in bash, then run the publish command again.
+
+* Windows:
+            
+    <i>haven't tried yet on windows</i>
+    
+Dotnet may give an error stating that platform linker 'clang-3.9' is not found. In this case, install the latest clang and run "export CppCompilerAndLinker=clang" in bash, then run the publish command again.
     
