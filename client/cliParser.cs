@@ -455,6 +455,8 @@ namespace CLIParserNS
             {
                 CLIInterface.logError($"{description.name} action takes one required argument, resource name, with an option --deps to add dependencies. Usage:");
                 logUsage();
+                successful = false;
+                return;
             }
 
             string resourceStr = actionArgs[0];
@@ -465,6 +467,8 @@ namespace CLIParserNS
             catch (ParseUtils.ArgumentProcessException ex)
             {
                 CLIInterface.logError($"Error: {ex.Message}");
+                successful = false;
+                return;
             }
 
             if (actionArgs.Count >= 2)
