@@ -9,8 +9,11 @@ To debug/run client:
     execute "dotnet run"
 
 To build client to native executable (from inside the client directory):
-    * Linux:
-        dotnet publish -r linux-x64 -c release
+
+	* Linux:
+    
+		dotnet publish -r linux-x64 -c release
+		
     * Mac:
         dotnet publish -r osx-x64 -c release
     * Windows:
