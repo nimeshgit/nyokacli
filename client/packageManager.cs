@@ -13,8 +13,6 @@ using System.Threading.Tasks;
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
 // @TODO make model plural, both on client side, server side, and in web api
-// @TODO add possibility of making
-// @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
 {
     public static class PackageManager
