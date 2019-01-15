@@ -16,6 +16,8 @@ namespace FSOpsNS
         }
 
         public static char dirSeparatorChar => Path.DirectorySeparatorChar;
+
+        private static readonly string remoteServerConfigFileName = ".nyokaremote";
         private static readonly string codeDirName = "Code";
         private static readonly string dataDirName = "Data";
         private static readonly string modelDirName = "Models";
@@ -30,6 +32,21 @@ namespace FSOpsNS
             if (resourceType == ResourceType.Data) return dataDirName;
             if (resourceType == ResourceType.Model) return modelDirName;
             throw new FSOpsException($"No matching resource directory for resource type {resourceType}");
+        }
+
+        public static bool remoteServerConfigFileExists()
+        {
+            return File.Exists(remoteServerConfigFileName);
+        }
+
+        public static string unsafeGetRemoteServerConfigString()
+        {
+            return File.ReadAllText(remoteServerConfigFileName).Trim();
+        }
+
+        public static void createOrOverwriteRemoteServerConfigString(string serverAddress)
+        {
+            File.WriteAllText(remoteServerConfigFileName, serverAddress);
         }
         
         public static bool hasNecessaryDirs()

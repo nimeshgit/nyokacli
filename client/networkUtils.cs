@@ -2,6 +2,7 @@ using Constants;
 using System.Collections.Generic;
 using InfoTransferContainers;
 using System.Linq;
+using FSOpsNS;
 
 namespace NetworkUtilsNS
 {
@@ -15,10 +16,20 @@ namespace NetworkUtilsNS
             }
         }
 
-        private static readonly string apiUrl = "http://localhost:5000/api";
+        private static string baseApiUrl()
+        {
+            if (FSOps.remoteServerConfigFileExists())
+            {
+                return FSOps.unsafeGetRemoteServerConfigString();
+            }
+            else
+            {
+                return "http://localhost:5000";
+            }
+        }
 
-        private static string getApiUrl => $"{apiUrl}/getresources";
-        private static string postApiUrl => $"{apiUrl}/postresources";
+        private static string getApiUrl => $"{baseApiUrl()}/api/getresources";
+        private static string postApiUrl => $"{baseApiUrl()}/api/postresources";
 
         private static string resourceUrlSection(ResourceType resourceType)
         {

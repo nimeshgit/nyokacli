@@ -8,9 +8,9 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
-// @TODO add .nyoka file or something, with "nyoka remote https://server.org" to store information there
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
+// @TODO validate remote server address
 namespace PackageManagerNS
 {
     public static class PackageManager
@@ -77,6 +77,11 @@ namespace PackageManagerNS
             string numToString = dividedByUnits%1==0 ? dividedByUnits.ToString() : string.Format("{0:0.00}", dividedByUnits);
 
             return $"{numToString} {suffix}";
+        }
+
+        public static void setRemoteServerAddress(string serverAddress)
+        {
+            FSOps.createOrOverwriteRemoteServerConfigString(serverAddress);
         }
 
         public static void initDirectories()

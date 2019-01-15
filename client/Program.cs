@@ -36,6 +36,9 @@ namespace nyoka
                 })
                 .withPublish(opts => {
                     PackageManager.publishResource(opts.resourceIdentifier, opts.deps);
+                })
+                .withRemote(opts => {
+                    PackageManager.setRemoteServerAddress(opts.webAddress);
                 });
         }
     }

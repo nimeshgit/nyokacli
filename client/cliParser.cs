@@ -142,6 +142,46 @@ namespace CLIParserNS
             return new PackageManager.ResourceIdentifier(resourceName, resourceType, version);
         }
     }
+
+    public class RemoteOptions
+    {
+        public static OptionDescription description = new OptionDescription(
+            "remote",
+            "Set remote server address for this directory"
+        );
+
+        public string webAddress;
+
+        public RemoteOptions(List<string> actionArgs, out bool successful)
+        {
+            if (actionArgs.Count != 1)
+            {
+                CLIInterface.logError($"{description.name} action takes no argument, web address. Usage:");
+                logUsage();
+                successful = false;
+                return;
+            }
+
+            webAddress = actionArgs[0];
+
+            successful = true;
+        }
+
+        private void logUsage()
+        {
+            CLIInterface.PrintTable table = new CLIInterface.PrintTable {
+                {"Example Action", 0},
+                {"Explanation", 0},
+            };
+
+            table.addRow(
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} \"http://serveraddress.com/nyokaapi\"",
+                $"Set the {ConstStrings.APPLICATION_ALIAS} remote server address for this directory to http://serveraddress.com/nyokaapi"
+            );
+
+            CLIInterface.logTable(table, visibleLines: false);
+        }
+    }
     
     public class InitOptions
     {
@@ -567,6 +607,8 @@ namespace CLIParserNS
         private DependenciesOptions parsedDependenciesOptions = null;
         private PublishOptions parsedPublishOptions = null;
 
+        private RemoteOptions parsedRemoteOptions = null;
+
         private static Dictionary<string, OptionDescription> optionDescriptions = new Dictionary<string, OptionDescription> {
             { InitOptions.description.name, InitOptions.description },
             { AddOptions.description.name, AddOptions.description },
@@ -575,6 +617,7 @@ namespace CLIParserNS
             { AvailableOptions.description.name, AvailableOptions.description },
             { DependenciesOptions.description.name, DependenciesOptions.description },
             { PublishOptions.description.name, PublishOptions.description },
+            { RemoteOptions.description.name, RemoteOptions.description },
         };
         
         public CLIParser(List<string> args)
@@ -640,6 +683,12 @@ namespace CLIParserNS
                 var opts = new PublishOptions(actionArgs, out optionParseSuccessful);
                 
                 if (optionParseSuccessful) parsedPublishOptions = opts;
+            }
+            if (actionName == RemoteOptions.description.name)
+            {
+                var opts = new RemoteOptions(actionArgs, out optionParseSuccessful);
+
+                if (optionParseSuccessful) parsedRemoteOptions = opts;
             }
         }
 
@@ -709,6 +758,13 @@ namespace CLIParserNS
         public CLIParser withPublish(System.Action<PublishOptions> callFunc)
         {
             if (parsedPublishOptions != null) callFunc(parsedPublishOptions);
+
+            return this;
+        }
+
+        public CLIParser withRemote(System.Action<RemoteOptions> callFunc)
+        {
+            if (parsedRemoteOptions != null) callFunc(parsedRemoteOptions);
 
             return this;
         }
