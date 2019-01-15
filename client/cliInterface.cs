@@ -13,6 +13,44 @@ namespace CLIInterfaceNS
         private static System.ConsoleColor tableFrameColor = System.ConsoleColor.White;
         private static System.ConsoleColor questionForegroundColor = System.ConsoleColor.White;
 
+        public class ProgressBar
+        {
+            private List<System.Action> onCompleteFuncs = new List<System.Action>();
+            private List<System.Action> onProgressChangedFuncs = new List<System.Action>();
+
+            private long totalSize;
+            private string name;
+
+            public ProgressBar(string name, long totalSize)
+            {
+                this.name = name;
+                this.totalSize = totalSize;
+            }
+
+            public void setAmountDone(long amountDone)
+            {
+                System.Console.WriteLine($"{name} Progess: {amountDone}/{totalSize}");
+            }
+
+            internal void onProgressChanged(System.Action func)
+            {
+                onProgressChangedFuncs.Add(func);
+            }
+            
+            public void completeProgressBar()
+            {
+                foreach (System.Action func in onCompleteFuncs)
+                {
+                    func();
+                }
+            }
+            
+            public void onComplete(System.Action func)
+            {
+                onCompleteFuncs.Add(func);
+            }
+        }
+
         // Inherits from IEnumerable to enable object initializer
         public class PrintTable : System.Collections.IEnumerable
         {
@@ -124,6 +162,16 @@ namespace CLIInterfaceNS
         {
             System.Console.ResetColor();
             System.Console.WriteLine(str);
+        }
+
+        public static void addProgressBar(ProgressBar bar)
+        {
+            // bar.onProgressChanged(() => {});
+        }
+
+        public static void removeProgressBar(ProgressBar bar)
+        {
+            
         }
 
         public static void logTable(PrintTable table, bool visibleLines = true)

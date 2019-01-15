@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
 // @TODO validate remote server address
+// @TODO progress bars for downloads
+// @TODO don't overwrite dependencies that are already downloaded
 namespace PackageManagerNS
 {
     public static class PackageManager
@@ -110,20 +112,22 @@ namespace PackageManagerNS
 
                 // check that resource on server has specified version
                 var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                if (!versionInfo.versions.Contains(version))
+                if (!versionInfo.versions.ContainsKey(version))
                 {
                     CLIInterface.logError(
-                        $"Could not find version {version} on server. These are the version(s) available: {string.Join(", ", versionInfo.versions)}"
+                        $"Could not find version {version} on server. These are the version(s) available: {string.Join(", ", versionInfo.versions.Keys.ToList())}"
                     );
                     return;
                 }
 
-                using (Stream resourceServerStream = NetworkUtils.getResource(resourceType, resourceName, version))
                 using (FileStream resourceFileStream = FSOps.createResourceFile(resourceType, resourceName))
                 using (StreamWriter versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
                 {
-                    Task resourceFileTask = Task.Factory.StartNew(() => resourceServerStream.CopyTo(resourceFileStream));
-                    Task resourceVersionTask = Task.Factory.StartNew(() => versionFileStream.WriteLine(version));
+                    Task resourceFileTask = NetworkUtils.downloadResource(resourceType, resourceName, version, resourceFileStream);
+                    
+                    Task resourceVersionTask = Task.Factory.StartNew(() => {
+                        versionFileStream.WriteLine(version);
+                    });
 
                     Task.WaitAll(resourceFileTask, resourceVersionTask);
                 }
@@ -164,11 +168,11 @@ namespace PackageManagerNS
                 else
                 {
                     // check that the requested version is available from the server
-                    if (!serverVersionInfo.versions.Contains(version))
+                    if (!serverVersionInfo.versions.ContainsKey(version))
                     {
                         CLIInterface.logError(
                             $"There is no version {version} available of resource {resourceName}. " +
-                            $"These are the version(s) available: {string.Join(", ", serverVersionInfo.versions)}"
+                            $"These are the version(s) available: {string.Join(", ", serverVersionInfo.versions.Keys.ToList())}"
                         );
                         return;
                     }
@@ -188,6 +192,7 @@ namespace PackageManagerNS
                     else
                     {
                         CLIInterface.logLine("Package add aborted");
+                        return;
                     }
                 }
 
@@ -415,7 +420,7 @@ namespace PackageManagerNS
                 else
                 {
                     var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
-                    if (!versionInfo.versions.Contains(version))
+                    if (!versionInfo.versions.ContainsKey(version))
                     {
                         CLIInterface.logError("Server does not report having a version \"{version}\" available for {resourceName}");
                     }
@@ -598,7 +603,7 @@ namespace PackageManagerNS
                     ResourceVersionsInfoContainer serverVersionsInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
 
                     // If this resource exists with the same version on server
-                    if (serverVersionsInfo.versions.Contains(publishVersion))
+                    if (serverVersionsInfo.versions.ContainsKey(publishVersion))
                     {
                         bool continueAnyways = CLIInterface.askYesOrNo(
                             $"Version {publishVersion} of {resourceType.ToString()} resource " +

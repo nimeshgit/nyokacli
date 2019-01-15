@@ -217,14 +217,24 @@ namespace ServerResourceDirNS
 
         private ResourceVersionsInfoContainer getResourceVersions(string parentDirPath, string resourceName)
         {
-            List<string> versions = Directory.GetDirectories(Path.Combine(parentDirPath, resourceName))
-                .Select(path => new DirectoryInfo(path).Name).ToList();
+            List<string> versionDirPaths = Directory.GetDirectories(Path.Combine(parentDirPath, resourceName)).ToList();
+            // List<string> versionNames = Directory.GetDirectories(Path.Combine(parentDirPath, resourceName))
+            //     .Select(path => new DirectoryInfo(path).Name).ToList();
 
-            versions.Sort(compareVersions);
+            Dictionary<string, ResourceVersionsInfoContainer.ResourceVersionDescription> versions = versionDirPaths.ToDictionary(
+                dirPath => new DirectoryInfo(dirPath).Name,
+                dirPath => {
+                    string resourceFilePath = Path.Combine(dirPath, resourceName);
+                    return new ResourceVersionsInfoContainer.ResourceVersionDescription(new FileInfo(resourceFilePath).Length);
+                }
+            );
+
+            List<string> sortedVersions = versions.Keys.ToList();
+            sortedVersions.Sort(compareVersions);
 
             return new ResourceVersionsInfoContainer(
                 versions,
-                versions[0] // first item in sorted list is the newest version
+                sortedVersions[0] // first item in sorted list is the newest version
             );
         }
 

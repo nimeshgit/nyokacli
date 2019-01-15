@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using InfoTransferContainers;
 using System.Linq;
 using FSOpsNS;
+using CLIInterfaceNS;
 
 namespace NetworkUtilsNS
 {
@@ -66,17 +67,68 @@ namespace NetworkUtilsNS
 
         private static readonly System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
-        public static System.IO.Stream getResource(ResourceType resourceType, string resourceName, string version)
+        public static async System.Threading.Tasks.Task downloadResource(
+            ResourceType resourceType,
+            string resourceName,
+            string version,
+            System.IO.Stream resultStream)
         {
+            long totalFileSize;
+            
+            try
+            {
+                totalFileSize = getResourceVersions(resourceType, resourceName).versions[version].byteCount;
+            }
+            catch (System.Exception)
+            {
+                throw new NetworkUtilsException(
+                    $"Could not find {resourceType.ToString().ToLower()} resource {resourceName} at version {version} on server"
+                );
+            }
+            
+            var progressBar = new CLIInterface.ProgressBar(resourceName, totalFileSize);
+            
+            CLIInterface.addProgressBar(progressBar);
+            progressBar.onComplete(() => CLIInterface.removeProgressBar(progressBar));
+            
             string url = resourceFileUrl(resourceType, resourceName, version);
 
             try
             {
-                System.IO.Stream stream = client.GetStreamAsync(url).Result;
-                return stream;
+                using (var contentStream = await client.GetStreamAsync(url))
+                {
+                    var returnProgressBar = new CLIInterfaceNS.CLIInterface.ProgressBar(resourceName, totalFileSize);
+                    progressBar = returnProgressBar;
+                
+                    byte[] buffer = new byte[1];
+
+                    bool doneReadingContent = false;
+
+                    long totalBytesRead = 0;
+                    
+                    // @TODO add cancellation?
+                    do
+                    {
+                        int bytesRead = contentStream.Read(buffer, 0, buffer.Length);
+                        
+                        if (bytesRead == 0)
+                        {
+                            System.Console.WriteLine("done reading");
+                            doneReadingContent = true;
+                        }
+                        
+                        totalBytesRead += bytesRead;
+
+                        returnProgressBar.setAmountDone(totalBytesRead);
+
+                        await resultStream.WriteAsync(buffer, 0, bytesRead);
+                    }
+                    while(!doneReadingContent);
+                }
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to get file for {resourceType} resource {resourceName}"
                 );
@@ -105,8 +157,9 @@ namespace NetworkUtilsNS
 
                 return versionsInfo;
             }
-            catch (System.Exception)
+            catch (System.Exception ex)
             {
+                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to process server response to request for " +
                     $"list of versions of {resourceType} resource {resourceName}"

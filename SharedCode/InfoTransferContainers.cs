@@ -85,19 +85,49 @@ namespace InfoTransferContainers
 
     public class ResourceVersionsInfoContainer
     {
+        public class ResourceVersionDescription
+        {
+            public static ResourceVersionDescription deserialize(string str)
+            {
+                return new ResourceVersionDescription(long.Parse(str.Trim()));
+            }
+            public long byteCount;
+            public ResourceVersionDescription(long byteCount)
+            {
+                this.byteCount = byteCount;
+            }
+
+            public string serialize()
+            {
+                return this.byteCount.ToString();
+            }
+        }
         public static ResourceVersionsInfoContainer deserialize(string str)
         {
-            string[] splitBySemicolon = str.Trim().Split(';');
-            string latestVersion = splitBySemicolon[0];
-            List<string> versions = Splitter.trimThenHandlEmptyString(splitBySemicolon[1], ',');
+            string latestVersion = str.Trim().Split(';')[0];
+            string versionDictString = str.Trim().Split(';')[1];
+
+            List<string> versionDictEntryStrings = Splitter.trimThenHandlEmptyString(versionDictString, ',');
+            var versions = new Dictionary<string, ResourceVersionDescription>();
+
+            foreach (string dictEntryStr in versionDictEntryStrings)
+            {
+                string versionStr = dictEntryStr.Split(':')[0];
+                string serializedVersionDescription = dictEntryStr.Split(':')[1];
+
+                ResourceVersionDescription versionDescription = ResourceVersionDescription.deserialize(serializedVersionDescription);
+                
+                versions[versionStr] = versionDescription;
+            }
 
             return new ResourceVersionsInfoContainer(versions, latestVersion);
         }
-        
-        public List<string> versions;
+
+        public Dictionary<string, ResourceVersionDescription> versions;
+
         public string latestVersion;
 
-        public ResourceVersionsInfoContainer(List<string> versions, string latestVersion)
+        public ResourceVersionsInfoContainer(Dictionary<string, ResourceVersionDescription> versions, string latestVersion)
         {
             this.versions = versions;
             this.latestVersion = latestVersion;
@@ -105,7 +135,17 @@ namespace InfoTransferContainers
 
         public string serialize()
         {
-            return $"{latestVersion};{string.Join(",", versions)}";
+            List<string> versionDictEntryStrings = new List<string>();
+
+            foreach (var (versionName, versionDescription) in versions.Select(x => (x.Key, x.Value)))
+            {
+                string entryString = $"{versionName}:{versionDescription.serialize()}";
+                versionDictEntryStrings.Add(entryString);
+            }
+            string versionDictString = string.Join(",", versionDictEntryStrings);
+
+            return $"{latestVersion};{versionDictString}";
+            // return $"{latestVersion};{string.Join(",", versions)}";
         }
     }
 
