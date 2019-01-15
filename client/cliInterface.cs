@@ -113,6 +113,9 @@ namespace CLIInterfaceNS
                     System.Console.ResetColor();
                 }
             }
+            
+            System.Console.ResetColor();
+            System.Console.Write("\n");
 
             return response.Value;
         }
@@ -202,6 +205,9 @@ namespace CLIInterfaceNS
 
                 System.Console.Write("\n");
             }
+            
+            System.Console.ResetColor();
+            System.Console.Write("\n");
         }
     }
 }
