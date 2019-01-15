@@ -20,6 +20,7 @@ namespace CLIParserNS
         public static ResourceType parseResourceType(string type)
         {
             if (type.ToLower() == "model") return ResourceType.Model;
+            if (type.ToLower() == "models") return ResourceType.Model;
             else if (type.ToLower() == "data") return ResourceType.Data;
             else if (type.ToLower() == "code") return ResourceType.Code;
             else throw new ArgumentProcessException($"Invalid resource type \"{type}\"");
