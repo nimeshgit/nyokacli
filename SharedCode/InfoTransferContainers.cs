@@ -6,9 +6,12 @@ namespace InfoTransferContainers
 {
     internal static class Splitter
     {
-        public static List<string> withoutEmpty(string str, char splitCh)
+        public static List<string> trimThenHandlEmptyString(string str, char splitCh)
         {
-            return str.Split(new char[] {splitCh}, StringSplitOptions.RemoveEmptyEntries).ToList();
+            if (str.Trim().Length == 0) return new List<string>();
+            
+            // trim then split
+            return str.Trim().Split(splitCh).ToList();
         }
     }
     public class AvailableResourcesInfoContainer
@@ -18,7 +21,7 @@ namespace InfoTransferContainers
         {
             public static AvailableResourceDescription deserialize(string str)
             {
-                List<string> splitBySemicolon = Splitter.withoutEmpty(str, ';');
+                List<string> splitBySemicolon = Splitter.trimThenHandlEmptyString(str, ';');
                 return new AvailableResourceDescription(
                     long.Parse(splitBySemicolon[0]),
                     splitBySemicolon[1]
@@ -41,7 +44,7 @@ namespace InfoTransferContainers
         }
         public static AvailableResourcesInfoContainer deserialize(string str)
         {
-            List<string> keyValueStrings = Splitter.withoutEmpty(str, ',');
+            List<string> keyValueStrings = Splitter.trimThenHandlEmptyString(str, ',');
 
             var resourceDescriptions = new Dictionary<string, AvailableResourceDescription>();
             
@@ -86,7 +89,7 @@ namespace InfoTransferContainers
         {
             string[] splitBySemicolon = str.Trim().Split(';');
             string latestVersion = splitBySemicolon[0];
-            List<string> versions = Splitter.withoutEmpty(splitBySemicolon[1], ',');
+            List<string> versions = Splitter.trimThenHandlEmptyString(splitBySemicolon[1], ',');
 
             return new ResourceVersionsInfoContainer(versions, latestVersion);
         }
@@ -138,7 +141,7 @@ namespace InfoTransferContainers
 
         public static ResourceDependencyInfoContainer deserialize(string str)
         {
-            List<string> depDictsStrings = Splitter.withoutEmpty(str, ';');
+            List<string> depDictsStrings = Splitter.trimThenHandlEmptyString(str, ';');
 
             var depDicts = new List<Dictionary<string, DependencyDescription>>();
 
@@ -146,7 +149,7 @@ namespace InfoTransferContainers
             {
                 var depDict = new Dictionary<string, DependencyDescription>();
 
-                foreach (string keyValStrPair in Splitter.withoutEmpty(depDictStr, ','))
+                foreach (string keyValStrPair in Splitter.trimThenHandlEmptyString(depDictStr, ','))
                 {
                     string key = keyValStrPair.Split(':')[0];
                     string depDescriptionStr = keyValStrPair.Split(':')[1];
@@ -235,14 +238,14 @@ namespace InfoTransferContainers
 
         public static PublishDepsInfoContainer deserialize(string str)
         {
-            List<string> depDictStrings = Splitter.withoutEmpty(str, ';');
+            List<string> depDictStrings = Splitter.trimThenHandlEmptyString(str, ';');
 
             var depDicts = new List<Dictionary<string, PublishDepDescription>>();
 
             foreach (string depDictString in depDictStrings)
             {
                 var depDict = new Dictionary<string, PublishDepDescription>();
-                List<string> depKeyValuePairStrings = Splitter.withoutEmpty(depDictString, ',');
+                List<string> depKeyValuePairStrings = Splitter.trimThenHandlEmptyString(depDictString, ',');
 
                 foreach (string depKVPairStr in depKeyValuePairStrings)
                 {

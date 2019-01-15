@@ -64,9 +64,8 @@ namespace NetworkUtilsNS
                 System.IO.Stream stream = client.GetStreamAsync(url).Result;
                 return stream;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to get file for {resourceType} resource {resourceName}"
                 );
@@ -81,12 +80,10 @@ namespace NetworkUtilsNS
             try
             {
                 serializedInfo = client.GetStringAsync(url).Result;
-                System.Console.WriteLine(serializedInfo);
             }
 
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to get list of versions of {resourceType} resource {resourceName} from server"
                 );
@@ -97,9 +94,8 @@ namespace NetworkUtilsNS
 
                 return versionsInfo;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to process server response to request for " +
                     $"list of versions of {resourceType} resource {resourceName}"
@@ -116,11 +112,9 @@ namespace NetworkUtilsNS
             try
             {
                 serializedInfo = client.GetStringAsync(url).Result;
-                System.Console.WriteLine(serializedInfo);
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to get list of package dependencies from server");
             }
             
@@ -129,9 +123,8 @@ namespace NetworkUtilsNS
                 ResourceDependencyInfoContainer dependencies = ResourceDependencyInfoContainer.deserialize(serializedInfo);
                 return dependencies;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to process server response to request for list of dependencies");
             }
         }
@@ -144,11 +137,9 @@ namespace NetworkUtilsNS
             try
             {
                 serialized = client.GetStringAsync(url).Result;
-                System.Console.WriteLine(serialized);
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to get list of available resources from server");
             }
             try
@@ -156,9 +147,8 @@ namespace NetworkUtilsNS
                 AvailableResourcesInfoContainer resources = AvailableResourcesInfoContainer.deserialize(serialized);
                 return resources;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to process server response to available resources request");
             }
         }
@@ -195,14 +185,12 @@ namespace NetworkUtilsNS
 
                     if (!statusResult.IsSuccessStatusCode)
                     {
-                        System.Console.WriteLine("not success status code");
                         throw new NetworkUtilsException("Unsuccessful");
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException("Unable to publish {resourceType} resource {resourceName} to server");
             }
         }

@@ -7,6 +7,7 @@ using Constants;
 using CLIInterfaceNS;
 using System.Linq;
 using FileTypeInferenceNS;
+using CLIParserNS;
 
 namespace nyoka_cli
 {
@@ -146,220 +147,30 @@ namespace nyoka_cli
 
     class Program
     {
-        internal class ArgumentProcessException : System.Exception
-        {
-            public ArgumentProcessException(string mssg)
-            : base (mssg)
-            {
-            }
-        }
-
-        private static ResourceType parseResourceType(string type)
-        {
-            if (type.ToLower() == "model") return ResourceType.Model;
-            else if (type.ToLower() == "data") return ResourceType.Data;
-            else if (type.ToLower() == "code") return ResourceType.Code;
-            else throw new ArgumentProcessException($"Invalid resource type \"{type}\"");
-        }
-        
-        private static ResourceType inferResourceTypeFromResourceName(string resourceName)
-        {
-            try{
-                if (FileTypeInference.isCodeFileName(resourceName)) return ResourceType.Code;
-                if (FileTypeInference.isDataFileName(resourceName)) return ResourceType.Data;
-                if (FileTypeInference.isModelFileName(resourceName)) return ResourceType.Model;
-                throw new System.Exception();
-            }
-            catch (System.Exception)
-            {
-                throw new ArgumentProcessException($"Could not infer resource type from extension of {resourceName}");
-            }
-        }
-
-        private static void validateVersionString(string resourceStr, string version)
-        {
-            string[] versionSections = version.Split('.');
-            foreach (string section in versionSections)
-            {
-                if (section.Trim() != section)
-                {
-                    throw new ArgumentProcessException("Version cannot contain spaces");
-                }
-                // if this is section empty
-                if (section.Length == 0)
-                {
-                    // if this is also the only section
-                    if (versionSections.Length == 1)
-                    {
-                        throw new ArgumentProcessException($"\"{resourceStr}\" is missing version");
-                    }
-                    else
-                    {
-                        throw new ArgumentProcessException(
-                            $"Invalid version \"{version}\" in \"{resourceStr}\": Version should be " +
-                            "series of numbers separated by periods, like 1.2.3 or 333.3.20"
-                        );
-                    }
-                }
-                foreach (char ch in section)
-                {
-                    if (!"1234567890".Contains(ch))
-                    {
-                        throw new ArgumentProcessException($"Invalid version character \"{ch}\" in {resourceStr}");
-                    }
-                }
-            }
-        }
-
-        private static void validateFileName(string resourceName)
-        {
-            foreach (char ch in resourceName)
-            {
-                // @TODO use regex?
-                if (!"qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890_-.".Contains(ch))
-                {
-                    throw new ArgumentProcessException($"Invalid character in file name: \"{ch}\"");
-                }
-            }
-        }
-
-        private static PackageManager.ResourceIdentifier generateResourceIdentifier(string resourceStr)
-        {
-            string[] splitByAt = resourceStr.Split('@');
-
-            string version;
-            string resourceName;
-
-            // If there is no @ symbol in the string to separate name from version
-            if (splitByAt.Length == 1)
-            {
-                version = null; // redundant?
-                resourceName = splitByAt[0];
-            }
-            // If there is one @ symbol in the string to separate name from version
-            else if (splitByAt.Length == 2)
-            {
-                version = splitByAt[1];
-                resourceName = splitByAt[0];
-            }
-            // If there is more than one @ symbol in the string
-            else
-            {
-                throw new ArgumentProcessException(
-                    $"Could not process \"{resourceStr}\": Only one @ symbol is permitted in a resource name"
-                );
-            }
-
-            ResourceType resourceType = inferResourceTypeFromResourceName(resourceName);
-
-            if (version != null)
-            {
-                // validate version string
-                validateVersionString(resourceStr, version);
-            }
-            
-            validateFileName(resourceName);
-
-            return new PackageManager.ResourceIdentifier(resourceName, resourceType, version);
-        }
         
         static void Main(string[] args)
         {
-            Parser parser = new Parser(settings => {
-                settings.CaseInsensitiveEnumValues = true;
-                settings.HelpWriter = System.Console.Error;
-            });
-
-            parser.ParseArguments<InitOptions, AddOptions, RemoveOptions, ListOptions, AvailableOptions, DependenciesOptions, PublishOptions>(args)
-                .WithParsed<InitOptions>(opts => {
+            new CLIParser(args.ToList())
+                .withInit(opts => {
                     PackageManager.initDirectories();
                 })
-                .WithParsed<ListOptions>(opts => {
-                    if (opts.resourceType == null)
-                    {
-                        PackageManager.listResources(null);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            ResourceType resourceType = parseResourceType(opts.resourceType);
-                            PackageManager.listResources(resourceType);
-                        }
-                        catch (ArgumentProcessException ex)
-                        {
-                            CLIInterface.logError(ex.Message);
-                        }
-                    }
+                .withList(opts => {
+                    PackageManager.listResources(opts.resourceType);
                 })
-                .WithParsed<AddOptions>(opts => {
-                    try
-                    {
-                        PackageManager.addPackage(
-                            generateResourceIdentifier(opts.resourceStr)
-                        );
-                    }
-                    catch (ArgumentProcessException ex)
-                    {
-                        CLIInterface.logError(ex.Message);
-                    }
+                .withAdd(opts => {
+                    PackageManager.addPackage(opts.resourceIdentifier);
                 })
-                .WithParsed<RemoveOptions>(opts => {
-                    try
-                    {
-                        PackageManager.removePackage(
-                            generateResourceIdentifier(opts.resourceStr)
-                        );
-                    }
-                    catch (ArgumentProcessException ex)
-                    {
-                        CLIInterface.logError(ex.Message);
-                    }
+                .withRemove(opts => {
+                    PackageManager.removePackage(opts.resourceIdentifier);
                 })
-                .WithParsed<AvailableOptions>(opts => {
-                    if (opts.resourceType == null)
-                    {
-                        PackageManager.listAvailableResources(null);
-                    }
-                    else
-                    {
-                        try
-                        {
-                            ResourceType resourceType = parseResourceType(opts.resourceType);
-                            PackageManager.listAvailableResources(resourceType);
-                        }
-                        catch (ArgumentProcessException ex)
-                        {
-                            CLIInterface.logError(ex.Message);
-                        }
-                    }
+                .withAvailable(opts => {
+                    PackageManager.listAvailableResources(opts.resourceType);
                 })
-                .WithParsed<DependenciesOptions>(opts => {
-                    try
-                    {
-                        PackageManager.listDependencies(
-                            inferResourceTypeFromResourceName(opts.resourceName),
-                            opts.resourceName,
-                            opts.version
-                        );
-                    }
-                    catch (ArgumentProcessException ex)
-                    {
-                        CLIInterface.logError(ex.Message);
-                    }
+                .withDependencies(opts => {
+                    PackageManager.listDependencies(opts.resourceIdentifier);
                 })
-                .WithParsed<PublishOptions>(opts => {
-                    try
-                    {
-                        PackageManager.publishResource(
-                            generateResourceIdentifier(opts.resourceStr),
-                            opts.deps.Select(depStr => generateResourceIdentifier(depStr))
-                        );
-                    }
-                    catch (ArgumentProcessException ex)
-                    {
-                        CLIInterface.logError(ex.Message);
-                    }
+                .withPublish(opts => {
+                    PackageManager.publishResource(opts.resourceIdentifier, opts.deps);
                 });
         }
     }

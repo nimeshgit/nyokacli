@@ -374,8 +374,12 @@ namespace PackageManagerNS
             }
         }
 
-        public static void listDependencies(ResourceType resourceType, string resourceName, string version)
+        public static void listDependencies(ResourceIdentifier resourceDescription)
         {
+            string resourceName = resourceDescription.resourceName;
+            ResourceType resourceType = resourceDescription.resourceType;
+            string version = resourceDescription.version;
+            
             try
             {
                 // check if this resource exists on server
@@ -606,7 +610,6 @@ namespace PackageManagerNS
                         }
                     }
                 }
-
 
                 CLIInterface.logLine("Opening file.");
                 FileStream fileStream = FSOps.readResourceFile(resourceType, resourceName);

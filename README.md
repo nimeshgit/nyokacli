@@ -8,6 +8,6 @@ To run client:
     Navigate to client in terminal
     execute "dotnet run"
 
-If you're using bash, to avoid building client each time it's run, you may want to put something this in your ~/.bashrc or ~/.bash_profile file:
-
-alias nyoka "dotnet run --project --nobuild path/to/ny_cli/client"
+To build client to native:
+    run "dotnet publish -r linux-x64 -c release", replacing linux-x64 with the appropriate platform name.
+    Dotnet may give an error stating that platform linker 'clang-3.9' is not found. In this case, install the latest clang and run "export CppCompilerAndLinker=clang" in bash, then run the publish command again.
