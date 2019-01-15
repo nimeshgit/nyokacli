@@ -13,7 +13,6 @@ namespace nyoka
 {
     class Program
     {
-        
         static void Main(string[] args)
         {
             new CLIParser(args.ToList())

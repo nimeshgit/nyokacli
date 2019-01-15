@@ -9,10 +9,8 @@ using CLIInterfaceNS;
 using System.Threading.Tasks;
 
 // @TODO add .nyoka file or something, with "nyoka remote https://server.org" to store information there
-// @TODO rename client project to nyoka
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
-// @TODO make model plural, both on client side, server side, and in web api
 namespace PackageManagerNS
 {
     public static class PackageManager

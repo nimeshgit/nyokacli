@@ -48,7 +48,7 @@ namespace ServerResourceDirNS
         private string root;
         private string codeDirPath => $"{root}/Code";
         private string dataDirPath => $"{root}/Data";
-        private string modelDirPath => $"{root}/Model";
+        private string modelDirPath => $"{root}/Models";
 
         private AvailableResourcesInfoContainer getDirServerInfoDict(string parentDirPath)
         {

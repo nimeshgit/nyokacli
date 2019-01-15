@@ -30,7 +30,7 @@ namespace RepositoryServer.Controllers
         {
             if (resourceType == "code") return serverDir.getCodeServerInfoDict().serialize();
             if (resourceType == "data") return serverDir.getDataServerInfoDict().serialize();
-            if (resourceType == "model") return serverDir.getModelServerInfoDict().serialize();
+            if (resourceType == "models") return serverDir.getModelServerInfoDict().serialize();
             throw new FileNotFoundException();
         }
 
@@ -39,7 +39,7 @@ namespace RepositoryServer.Controllers
         {
             if (resourceType == "code") return serverDir.getCodeVersions(resourceName).serialize();
             if (resourceType == "data") return serverDir.getDataVersions(resourceName).serialize();
-            if (resourceType == "model") return serverDir.getModelVersions(resourceName).serialize();
+            if (resourceType == "models") return serverDir.getModelVersions(resourceName).serialize();
             throw new FileNotFoundException();
         }
 
@@ -48,7 +48,7 @@ namespace RepositoryServer.Controllers
         {
             if (resourceType == "code") return serverDir.getCodeStream(resourceName, version);
             if (resourceType == "data") return serverDir.getDataStream(resourceName, version);
-            if (resourceType == "model") return serverDir.getModelStream(resourceName, version);
+            if (resourceType == "models") return serverDir.getModelStream(resourceName, version);
             throw new FileNotFoundException();
         }
 
@@ -57,7 +57,7 @@ namespace RepositoryServer.Controllers
         {
             if (resourceType == "code") return serverDir.getCodeResourceDeps(resourceName, version).serialize();
             if (resourceType == "data") return serverDir.getDataResourceDeps(resourceName, version).serialize();
-            if (resourceType == "model") return serverDir.getModelResourceDeps(resourceName, version).serialize();
+            if (resourceType == "models") return serverDir.getModelResourceDeps(resourceName, version).serialize();
             throw new FileNotFoundException();
         }
 
@@ -76,7 +76,7 @@ namespace RepositoryServer.Controllers
             // if (resourceType == "code") return serverDir
             if (resourceType == "code") serverDir.addCodeResource(resourceName, version, depsInfo, requestFileStream);
             if (resourceType == "data") serverDir.addDataResource(resourceName, version, depsInfo, requestFileStream);
-            if (resourceType == "model") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
+            if (resourceType == "models") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
 
             return Ok();
         }

@@ -18,7 +18,7 @@ namespace FSOpsNS
         public static char dirSeparatorChar => Path.DirectorySeparatorChar;
         private static readonly string codeDirName = "Code";
         private static readonly string dataDirName = "Data";
-        private static readonly string modelDirName = "Model";
+        private static readonly string modelDirName = "Models";
         private static readonly string nyokaFolderName = ".nyoka";
 
         private static readonly string nyokaVersionExtension = ".version";

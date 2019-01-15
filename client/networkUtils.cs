@@ -24,7 +24,7 @@ namespace NetworkUtilsNS
         {
             if (resourceType == ResourceType.Code) return "code";
             if (resourceType == ResourceType.Data) return "data";
-            if (resourceType == ResourceType.Model) return "model";
+            if (resourceType == ResourceType.Model) return "models";
             throw new NetworkUtilsException("Could not form request to server");
         }
 
