@@ -2,7 +2,7 @@
 
 ### To debug/run server
 
-* Navigate to example_server in terminal
+* Navigate to RepositoryServer in terminal
     
         dotnet run
 
