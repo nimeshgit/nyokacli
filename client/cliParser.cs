@@ -86,24 +86,37 @@ namespace CLIParserNS
             }
         }
 
+        private static string removeFolderPrefixIfPresent(string resourceNameStr)
+        {
+            if (resourceNameStr.Split("/").Length > 1)
+            {
+                int indexOfLastSlash = resourceNameStr.LastIndexOf('/');
+                return resourceNameStr.Substring(indexOfLastSlash + 1);
+            }
+            else
+            {
+                return resourceNameStr;
+            }
+        }
+
         public static PackageManager.ResourceIdentifier generateResourceIdentifier(string resourceStr)
         {
             string[] splitByAt = resourceStr.Split('@');
 
             string version;
-            string resourceName;
+            string resourceNameStr;
 
             // If there is no @ symbol in the string to separate name from version
             if (splitByAt.Length == 1)
             {
                 version = null; // redundant?
-                resourceName = splitByAt[0];
+                resourceNameStr = splitByAt[0];
             }
             // If there is one @ symbol in the string to separate name from version
             else if (splitByAt.Length == 2)
             {
                 version = splitByAt[1];
-                resourceName = splitByAt[0];
+                resourceNameStr = splitByAt[0];
             }
             // If there is more than one @ symbol in the string
             else
@@ -112,6 +125,8 @@ namespace CLIParserNS
                     $"Could not process \"{resourceStr}\": Only one @ symbol is permitted in a resource name"
                 );
             }
+
+            string resourceName = removeFolderPrefixIfPresent(resourceNameStr);
 
             ResourceType resourceType = inferResourceTypeFromResourceName(resourceName);
 

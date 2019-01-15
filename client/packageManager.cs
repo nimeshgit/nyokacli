@@ -8,6 +8,11 @@ using InfoTransferContainers;
 using CLIInterfaceNS;
 using System.Threading.Tasks;
 
+// @TODO add .nyoka file or something, with "nyoka remote https://server.org" to store information there
+// @TODO rename client project to nyoka
+// @TODO on server side, and on client side, prevent similar files with different capitalizations?
+// @TODO Avoid windows reserved file names?
+// @TODO make model plural, both on client side, server side, and in web api
 // @TODO add possibility of making
 // @TODO (later) make publish asdf.py the same as publish code/asdf.py
 namespace PackageManagerNS
@@ -573,7 +578,7 @@ namespace PackageManagerNS
 
                 if (!FSOps.hasNecessaryDirs())
                 {
-                    CLIInterface.logError("Could not find nyoka resource folders in current directory.");
+                    CLIInterface.logError($"Could not find nyoka resource folders in current directory. Try running {ConstStrings.APPLICATION_ALIAS} {CLIParserNS.InitOptions.description.name}?");
                     return;
                 }
 
