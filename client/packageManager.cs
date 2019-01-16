@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
 // @TODO validate remote server address
-// @TODO progress bars for downloads
-// @TODO don't overwrite dependencies that are already downloaded
 namespace PackageManagerNS
 {
     public static class PackageManager
