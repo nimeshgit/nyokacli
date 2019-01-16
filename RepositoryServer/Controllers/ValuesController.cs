@@ -63,6 +63,8 @@ namespace RepositoryServer.Controllers
 
         // @TODO locks for uploading files? In order to prevent conflicting uploads
         [HttpPost("postresources/{resourceType}/{resourceName}/versions/{version}/post")]
+        // disables request size to allow large files
+        [DisableRequestSizeLimit]
         public ActionResult UploadImageAndOpenIt(
             string resourceType,
             string resourceName,
