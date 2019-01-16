@@ -30,8 +30,10 @@ Create ZMODServerFiles directory in home directory (~/ZMODServerFiles), with the
 	##### Note: You'll probably need Visual Studio (community edition is OK), with C++ tools installed, to run this.
         dotnet publish -r win-x64 -c release
     
-Dotnet may give an error stating that platform linker 'clang-3.9' is not found. In this case, install clang (if it isn
+On Linux or Mac, dotnet may give an error stating that platform linker 'clang-3.9' is not found. In this case, install clang (if it isn
 t already present), run "export CppCompilerAndLinker=clang" in the shell, then run the publish command again.
 
-Copy the resulting file nyoka_cli somewhere in your path (like /usr/local/bin)
+After building the client to native, you can find the executable in "client/bin/release/netcoreapp2.1/ linux-x64 or osx-x64 or win-x64 /native"
+
+To start using the executable on linux or mac, copy it nyoka to somewhere in your path (like /usr/local/bin)
     
