@@ -17,7 +17,7 @@ namespace NetworkUtilsNS
             }
         }
 
-        private static string baseApiUrl()
+        private static string baseServerUrl()
         {
             if (FSOps.remoteServerConfigFileExists())
             {
@@ -29,8 +29,8 @@ namespace NetworkUtilsNS
             }
         }
 
-        private static string getApiUrl => $"{baseApiUrl()}/api/getresources";
-        private static string postApiUrl => $"{baseApiUrl()}/api/postresources";
+        private static string getApiUrl => $"{baseServerUrl()}/api/getresources";
+        private static string postApiUrl => $"{baseServerUrl()}/api/postresources";
 
         private static string resourceUrlSection(ResourceType resourceType)
         {
@@ -85,11 +85,8 @@ namespace NetworkUtilsNS
                     $"Could not find {resourceType.ToString().ToLower()} resource {resourceName} at version {version} on server"
                 );
             }
-            
-            var progressBar = new CLIInterface.ProgressBar(resourceName, totalFileSize);
-            
-            CLIInterface.addProgressBar(progressBar);
-            progressBar.onComplete(() => CLIInterface.removeProgressBar(progressBar));
+
+            int bufferSize = System.Math.Max(1, System.Math.Min((int)(totalFileSize/100.0), 10000000));
             
             string url = resourceFileUrl(resourceType, resourceName, version);
 
@@ -97,10 +94,7 @@ namespace NetworkUtilsNS
             {
                 using (var contentStream = await client.GetStreamAsync(url))
                 {
-                    var returnProgressBar = new CLIInterfaceNS.CLIInterface.ProgressBar(resourceName, totalFileSize);
-                    progressBar = returnProgressBar;
-                
-                    byte[] buffer = new byte[1];
+                    byte[] buffer = new byte[bufferSize];
 
                     bool doneReadingContent = false;
 
@@ -113,22 +107,23 @@ namespace NetworkUtilsNS
                         
                         if (bytesRead == 0)
                         {
-                            System.Console.WriteLine("done reading");
                             doneReadingContent = true;
                         }
                         
                         totalBytesRead += bytesRead;
 
-                        returnProgressBar.setAmountDone(totalBytesRead);
-
                         await resultStream.WriteAsync(buffer, 0, bytesRead);
+
+                        int percentDone = totalFileSize == 0 ? 100 : (int)(100 * (double)totalBytesRead / (double)totalFileSize);
+
+                        CLIInterface.writeBottomLineOverwriteExisting($"Download {resourceName}: {percentDone}%");
                     }
                     while(!doneReadingContent);
+                    CLIInterface.logLine("");
                 }
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to get file for {resourceType} resource {resourceName}"
                 );
@@ -157,9 +152,8 @@ namespace NetworkUtilsNS
 
                 return versionsInfo;
             }
-            catch (System.Exception ex)
+            catch (System.Exception)
             {
-                System.Console.WriteLine(ex);
                 throw new NetworkUtilsException(
                     $"Unable to process server response to request for " +
                     $"list of versions of {resourceType} resource {resourceName}"
@@ -255,7 +249,7 @@ namespace NetworkUtilsNS
             }
             catch (System.Exception)
             {
-                throw new NetworkUtilsException("Unable to publish {resourceType} resource {resourceName} to server");
+                throw new NetworkUtilsException($"Unable to publish {resourceType} resource {resourceName} to server");
             }
         }
     }

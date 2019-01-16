@@ -40,6 +40,9 @@ namespace nyoka
                 .withRemote(opts => {
                     PackageManager.setRemoteServerAddress(opts.webAddress);
                 });
+
+            // To return console color to normal if necessary and to add some space at the bottom of the output
+            CLIInterface.logLine("");
         }
     }
 }

@@ -8,48 +8,10 @@ namespace CLIInterfaceNS
     {
         private static System.ConsoleColor warningColor = System.ConsoleColor.Yellow;
         // private static System.ConsoleColor errorBackroundColor = System.ConsoleColor.Red;
-        private static System.ConsoleColor errorForegroundColor = System.ConsoleColor.Red;
+        private static System.ConsoleColor errorColor = System.ConsoleColor.Red;
         private static System.ConsoleColor tableHeaderColor = System.ConsoleColor.Yellow;
         private static System.ConsoleColor tableFrameColor = System.ConsoleColor.White;
-        private static System.ConsoleColor questionForegroundColor = System.ConsoleColor.White;
-
-        public class ProgressBar
-        {
-            private List<System.Action> onCompleteFuncs = new List<System.Action>();
-            private List<System.Action> onProgressChangedFuncs = new List<System.Action>();
-
-            private long totalSize;
-            private string name;
-
-            public ProgressBar(string name, long totalSize)
-            {
-                this.name = name;
-                this.totalSize = totalSize;
-            }
-
-            public void setAmountDone(long amountDone)
-            {
-                System.Console.WriteLine($"{name} Progess: {amountDone}/{totalSize}");
-            }
-
-            internal void onProgressChanged(System.Action func)
-            {
-                onProgressChangedFuncs.Add(func);
-            }
-            
-            public void completeProgressBar()
-            {
-                foreach (System.Action func in onCompleteFuncs)
-                {
-                    func();
-                }
-            }
-            
-            public void onComplete(System.Action func)
-            {
-                onCompleteFuncs.Add(func);
-            }
-        }
+        private static System.ConsoleColor questionColor = System.ConsoleColor.White;
 
         // Inherits from IEnumerable to enable object initializer
         public class PrintTable : System.Collections.IEnumerable
@@ -106,36 +68,28 @@ namespace CLIInterfaceNS
 
         public static void logWarning(string message)
         {
-            System.Console.ResetColor();
-            System.Console.ForegroundColor = warningColor;
-            System.Console.Write($"WARNING: {message}");
-            System.Console.ResetColor();
-            System.Console.Write("\n");
+            internalWriteLine($"WARNING: {message}", warningColor);
         }
 
         public static void logError(string message)
         {
-            System.Console.ResetColor();
-            System.Console.ForegroundColor = errorForegroundColor;
-            System.Console.Write($"ERROR: {message}");
-            System.Console.ResetColor();
-            System.Console.Write("\n");
+            internalWriteLine($"ERROR: {message}", errorColor);
         }
 
-        public static bool askYesOrNo(string question)
+        public static bool askYesOrNo(string question, bool acceptEnterAsYes = true)
         {
             bool? response = null;
 
             while (!response.HasValue)
             {
                 System.Console.ResetColor();
-                System.Console.ForegroundColor = questionForegroundColor;
+                System.Console.ForegroundColor = questionColor;
                 System.Console.Write(question + " [y/n] ");
-                System.Console.ResetColor();
+                // internalWriteLine(question + " [y/n] ", questionColor);
                 
                 string input = System.Console.ReadLine();
 
-                if (input.Trim().ToLower() == "y")
+                if (input.Trim().ToLower() == "y" || (acceptEnterAsYes && input.Trim() == ""))
                 {
                     response = true;
                 }
@@ -145,33 +99,54 @@ namespace CLIInterfaceNS
                 }
                 else
                 {
-                    System.Console.ResetColor();
-                    System.Console.ForegroundColor = errorForegroundColor;
-                    System.Console.WriteLine($"Invalid response \"{input.Trim()}\": type in \"y\" or \"n\"");
-                    System.Console.ResetColor();
+                    internalWriteLine($"Invalid response \"{input.Trim()}\": type in \"y\" or \"n\"", errorColor);
                 }
             }
-            
-            System.Console.ResetColor();
-            System.Console.Write("\n");
 
             return response.Value;
         }
 
-        public static void logLine(string str)
+        public static void writeBottomLineOverwriteExisting(string str)
         {
             System.Console.ResetColor();
-            System.Console.WriteLine(str);
+            System.Console.Write("\r" + str.PadRight(System.Console.WindowWidth));
         }
 
-        public static void addProgressBar(ProgressBar bar)
+        public static void logLine(string str)
         {
-            // bar.onProgressChanged(() => {});
+            internalWriteLine(str);
         }
 
-        public static void removeProgressBar(ProgressBar bar)
+        private static void internalWriteLine(string str, System.ConsoleColor foregroundColor)
         {
+            List<System.ConsoleColor> charColors = Enumerable.Repeat(foregroundColor, str.Length).ToList();
             
+            internalWriteLine(str, charColors);
+        }
+
+        private static void internalWriteLine(string str) => internalWriteLine(str, System.Console.ForegroundColor);
+
+        private static void internalWriteLine(string str, List<System.ConsoleColor> charColors)
+        {            
+            // number of returns to print
+            int returnCount = str.Count(ch => ch == '\n');
+
+            // create extra returns at bottom of screen and moves cursor to starting place
+
+            System.Console.ResetColor();
+            System.ConsoleColor currentColor = System.Console.ForegroundColor;
+            for (int i = 0; i < str.Length; i++)
+            {
+                if (currentColor != charColors[i])
+                {
+                    currentColor = charColors[i];
+                    System.Console.ForegroundColor = charColors[i];
+                }
+                System.Console.Write(str[i]);
+            }
+
+            System.Console.ResetColor();
+            System.Console.Write("\n");
         }
 
         public static void logTable(PrintTable table, bool visibleLines = true)
@@ -179,40 +154,39 @@ namespace CLIInterfaceNS
             char verticalSeparator = visibleLines ? '|' : ' ';
             char horizontalSeparator = visibleLines ? '=' : ' ';
             char lineIntersectionChar = visibleLines ? '+' : ' ';
-            
-            string horizontalLine = "";
 
-            // log header
-            System.Console.ResetColor();
-            System.Console.ForegroundColor = tableFrameColor;
-            System.Console.Write(verticalSeparator);
+            string headerLine = "";
+            List<System.ConsoleColor> headerLineCharColors = new List<System.ConsoleColor>();
+            
             for (int col = 0; col < table.columnNames.Count; col++)
             {
-                System.Console.ForegroundColor = tableFrameColor;
-
-                if (col != 0)
-                {
-                    System.Console.Write(verticalSeparator);
-                }
-
-                System.Console.ForegroundColor = tableHeaderColor;
+                headerLine += verticalSeparator;
+                headerLineCharColors.Add(tableFrameColor);
 
                 // don't pad rightmost header if lines are not supposed to be visible
                 if (visibleLines || col != table.columnNames.Count - 1)
                 {
-                    System.Console.Write(table.columnNames[col].PadRight(table.columnWidths[col]));
+                    string nameStr = table.columnNames[col].PadRight(table.columnWidths[col]);
+                    
+                    headerLine += nameStr;
+                    headerLineCharColors.AddRange(Enumerable.Repeat(tableHeaderColor, nameStr.Length));
                 }
                 else
                 {
-                    System.Console.Write(table.columnNames[col]);
+                    string paddedNameStr = table.columnNames[col];
+                    
+                    headerLine += paddedNameStr;
+                    headerLineCharColors.AddRange(Enumerable.Repeat(tableHeaderColor, paddedNameStr.Length));
                 }
             }
-            System.Console.ForegroundColor = tableFrameColor;
-            System.Console.Write(verticalSeparator);
-            System.Console.ResetColor();
+            
+            headerLine += verticalSeparator;
+            headerLineCharColors.Add(tableFrameColor);
+            
+            internalWriteLine(headerLine, headerLineCharColors);
 
-            System.Console.Write("\n");
-
+            
+            string horizontalLine = "";
             // log line
             if (visibleLines)
             {
@@ -224,38 +198,35 @@ namespace CLIInterfaceNS
                     if (col == table.columnNames.Count - 1) horizontalLine += lineIntersectionChar; 
                 }
 
-                System.Console.ForegroundColor = tableFrameColor;
-                System.Console.WriteLine(horizontalLine);
-                System.Console.ResetColor();
+                internalWriteLine(horizontalLine, tableFrameColor);
             }
             else
             {
-                System.Console.Write("\n");
+                internalWriteLine("");
             }
 
             foreach (List<string> row in table.rows)
             {
-                System.Console.ForegroundColor = tableFrameColor;
-                System.Console.Write(verticalSeparator);
+                string lineString = "";
+                List<System.ConsoleColor> lineCharColors = new List<System.ConsoleColor>();
                 
                 for (int col = 0; col < table.columnWidths.Count; col++)
                 {
-                    System.Console.ForegroundColor = tableFrameColor;
+                    lineString += verticalSeparator;
+                    lineCharColors.Add(tableFrameColor);
 
-                    if (col != 0) System.Console.Write(verticalSeparator);
-
-                    System.Console.ResetColor();
-                    System.Console.Write(row[col].PadRight(table.columnWidths[col]));
+                    string tableValue = row[col].PadRight(table.columnWidths[col]);
+                    
+                    lineString += tableValue;
+                    lineCharColors.AddRange(Enumerable.Repeat(System.Console.ForegroundColor, tableValue.Length));
                 }
                 
-                System.Console.ForegroundColor = tableFrameColor;
-                System.Console.Write(verticalSeparator);
+                lineString += verticalSeparator;
+                lineCharColors.Add(tableFrameColor);
 
-                System.Console.Write("\n");
+                internalWriteLine(lineString, lineCharColors);
             }
-            
-            System.Console.ResetColor();
-            System.Console.Write("\n");
         }
+
     }
 }

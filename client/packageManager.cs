@@ -259,16 +259,60 @@ namespace PackageManagerNS
 
                 if (downloadDependencies)
                 {
+                    var depsToDownload = new List<(ResourceType, string, string)>();
                     foreach (var (depResourceType, deps) in depDescriptions.Select(x => (x.Key, x.Value)))
                     {
                         foreach (var (depName, depDescription) in deps.Select(x => (x.Key, x.Value)))
                         {
-                            downloadPackage(depResourceType, depName, depDescription.versionStr);
+                            bool continueWithDownload = true;
+                            
+                            // Ask user whether to overwrite file if a file with this name exists locally already
+                            if (FSOps.resourceFileExists(depResourceType, depName))
+                            {
+                                if (FSOps.resourceVersionFileExists(depResourceType, depName))
+                                {
+                                    string depLocalVersion = FSOps.getResourceVersion(depResourceType, depName);
+
+                                    if (depDescription.versionStr == depLocalVersion)
+                                    {
+                                        continueWithDownload = CLIInterface.askYesOrNo(
+                                            $"Dependency {depName} file exists locally at the required version " +
+                                            $"({depDescription.versionStr}). Overwrite this file?"
+                                        );
+                                    }
+                                    else
+                                    {
+                                        continueWithDownload = CLIInterface.askYesOrNo(
+                                            $"Dependency {depName} file exists locally at version {depLocalVersion}" +
+                                            $" (depency required version is {depDescription.versionStr}). Overwrite this file?"
+                                        );
+                                    }
+                                }
+                                else
+                                {
+                                    continueWithDownload = CLIInterface.askYesOrNo(
+                                        $"Dependency {depName} file exists locally at an unknown version. Overwrite this file?"
+                                    );
+                                }
+                            }
+
+                            if (continueWithDownload)
+                            {
+                                depsToDownload.Add((depResourceType, depName, depDescription.versionStr));
+                            }
+                            else
+                            {
+                                CLIInterface.logWarning($"Skipping download of dependency {depName}.");
+                            }
                         }
+                    }
+
+                    foreach (var (depResourceType, depName, depVersion) in depsToDownload)
+                    {
+                        downloadPackage(depResourceType, depName, depVersion);
                     }
                 }
 
-                CLIInterface.logLine($"Adding {resourceType.ToString()} resource \"{resourceName}\"");
                 downloadPackage(resourceType, resourceName, version);
             }
             catch (FSOps.FSOpsException ex)
