@@ -36,4 +36,5 @@ t already present), run "export CppCompilerAndLinker=clang" in the shell, then r
 After building the client to native, you can find the executable in "client/bin/release/netcoreapp2.1/ linux-x64 or osx-x64 or win-x64 /native"
 
 To start using the executable on linux or mac, copy it nyoka to somewhere in your path (like /usr/local/bin)
-    
+
+<u>Note</u>: <i>executables in builds dir may not be up to date.<i>
