@@ -243,6 +243,7 @@ namespace NetworkUtilsNS
 
                     if (!statusResult.IsSuccessStatusCode)
                     {
+                        CLIInterface.logError("HTTP Error: " + statusResult.StatusCode.ToString());
                         throw new NetworkUtilsException("Unsuccessful");
                     }
                 }

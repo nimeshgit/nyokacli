@@ -14,13 +14,14 @@ namespace RepositoryServer
     {
         public static void Main(string[] args)
         {
-            WebHost.CreateDefaultBuilder(args)
+            var host = WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
                 .UseKestrel(options => {
                     options.Limits.MaxRequestBodySize = 10000000000L;
                 })
-                .Build()
-                .Run();
+                .Build();
+            
+            host.Run();
         }
     }
 }
