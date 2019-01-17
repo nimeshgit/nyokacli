@@ -1,5 +1,5 @@
 from ..logging import Logger, LogTable
-from .cliActions import InitAction, AddAction
+from .cliActions import InitAction, AddAction, ListAction
 from ..constants import PROGRAM_NAME
 from .cliParseException import CLIParseException
 
@@ -7,6 +7,7 @@ class CLIParser:
     _possible_actions = [
         InitAction,
         AddAction,
+        ListAction,
     ]
 
     @staticmethod
@@ -29,7 +30,7 @@ class CLIParser:
         self.parsed_action = None
         
         if len(args) == 0:
-            Logger.log_error("ERROR: " + PROGRAM_NAME + " must be called with an action name. Available action names:")
+            Logger.log_error(PROGRAM_NAME + " must be called with an action name. Available action names:")
             CLIParser._list_available_actions()
             return
         
@@ -43,7 +44,7 @@ class CLIParser:
 
         
         if parse_class == None:
-            Logger.log_error("Invalid action name " + action_name + ". Available action names:")
+            Logger.log_error("Invalid action name \"" + action_name + "\". Available action names:")
             CLIParser._list_available_actions()
             return
         

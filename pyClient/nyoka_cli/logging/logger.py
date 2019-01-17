@@ -62,6 +62,24 @@ class Logger:
         print(Colors.CEND + writeStr, end="")
     
     @staticmethod
+    def ask_yes_no(questionStr):
+        response = None
+
+        while response is None:
+            print(Colors.CYELLOW2 + questionStr + " [y/n]")
+            string_response = input()
+            processed_input = string_response.strip().lower()
+
+            if processed_input == "y":
+                response = True
+            elif processed_input == "n":
+                response = False
+            else:
+                Logger.log_error('Invalid response "' + string_response + '". Enter "y" or "n".')
+
+        return response
+    
+    @staticmethod
     def log_table(table, show_frame=True):
         frame_vertical = "|" if show_frame else " "
         frame_horizontal = "=" if show_frame else " "
