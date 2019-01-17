@@ -14,11 +14,22 @@ namespace RepositoryServer
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
-        }
-
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+                .UseStartup<Startup>()
+                .UseKestrel(options => {
+                    if (options.Limits.MaxRequestBodySize.HasValue)
+                    {
+                        System.Console.WriteLine(options.Limits.MaxRequestBodySize.Value);
+                    }
+                    else
+                    {
+                        System.Console.WriteLine("Kestrel does not have a max request vody size by default, it seems");
+                    }
+                    
+                    options.Limits.MaxRequestBodySize = null;
+                })
+                .Build()
+                .Run();
+        }
     }
 }
