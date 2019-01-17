@@ -37,4 +37,4 @@ After building the client to native, you can find the executable in "client/bin/
 
 To start using the executable on linux or mac, copy it nyoka to somewhere in your path (like /usr/local/bin)
 
-# Note: executables in builds dir may not be up to date.
+<u>Note</u>: <i>executables in builds dir may not be up to date.<i>
