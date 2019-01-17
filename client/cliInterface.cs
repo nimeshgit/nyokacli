@@ -7,7 +7,6 @@ namespace CLIInterfaceNS
     public static class CLIInterface
     {
         private static System.ConsoleColor warningColor = System.ConsoleColor.Yellow;
-        // private static System.ConsoleColor errorBackroundColor = System.ConsoleColor.Red;
         private static System.ConsoleColor errorColor = System.ConsoleColor.Red;
         private static System.ConsoleColor tableHeaderColor = System.ConsoleColor.Yellow;
         private static System.ConsoleColor tableFrameColor = System.ConsoleColor.White;
