@@ -291,8 +291,6 @@ namespace ServerResourceDirNS
 
                 resourceDepsStream.Write(serializedDeps);
             }
-
-            inputResourceStream.Close();
         }
 
         public ServerResourceDir(string pathArg)

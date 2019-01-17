@@ -73,12 +73,13 @@ namespace RepositoryServer.Controllers
         {
             PublishDepsInfoContainer depsInfo = PublishDepsInfoContainer.deserialize(deps);
 
-            Stream requestFileStream = Request.Body;
-
-            // if (resourceType == "code") return serverDir
-            if (resourceType == "code") serverDir.addCodeResource(resourceName, version, depsInfo, requestFileStream);
-            if (resourceType == "data") serverDir.addDataResource(resourceName, version, depsInfo, requestFileStream);
-            if (resourceType == "models") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
+            using (Stream requestFileStream = Request.Body)
+            {
+                // if (resourceType == "code") return serverDir
+                if (resourceType == "code") serverDir.addCodeResource(resourceName, version, depsInfo, requestFileStream);
+                if (resourceType == "data") serverDir.addDataResource(resourceName, version, depsInfo, requestFileStream);
+                if (resourceType == "models") serverDir.addModelResource(resourceName, version, depsInfo, requestFileStream);
+            }
 
             return Ok();
         }
