@@ -17,16 +17,7 @@ namespace RepositoryServer
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
                 .UseKestrel(options => {
-                    if (options.Limits.MaxRequestBodySize.HasValue)
-                    {
-                        System.Console.WriteLine(options.Limits.MaxRequestBodySize.Value);
-                    }
-                    else
-                    {
-                        System.Console.WriteLine("Kestrel does not have a max request vody size by default, it seems");
-                    }
-                    
-                    options.Limits.MaxRequestBodySize = null;
+                    options.Limits.MaxRequestBodySize = 10000000000L;
                 })
                 .Build()
                 .Run();
