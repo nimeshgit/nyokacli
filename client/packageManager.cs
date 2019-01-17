@@ -11,6 +11,10 @@ using System.Threading.Tasks;
 // @TODO on server side, and on client side, prevent similar files with different capitalizations?
 // @TODO Avoid windows reserved file names?
 // @TODO validate remote server address
+// @TODO work out the max upload file size on nginx?
+// @TODO add default output for empty table
+// @TODO tell user when to two dashes for --deps.
+// @TODO prevent circular dependencies on server side
 namespace PackageManagerNS
 {
     public static class PackageManager

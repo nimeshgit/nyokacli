@@ -228,8 +228,6 @@ namespace NetworkUtilsNS
             {
                 using (var fileContent = new System.Net.Http.StreamContent(fileStream))
                 {
-                    // var fileNameOnly = Path.GetFileName(fileName);
-                    // var fileContent = new System.Net.Http.StreamContent(File.OpenRead(fileName));
                     fileContent.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("form-data")
                     {
                         Name = $"files[{resourceName}]",
@@ -237,16 +235,17 @@ namespace NetworkUtilsNS
                     };
                     fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
 
-                    // content.Add(new System.Net.Http.StringContent("gettext"), "type");
-
                     System.Net.Http.HttpResponseMessage statusResult = client.PostAsync(url, fileContent).Result;
 
                     if (!statusResult.IsSuccessStatusCode)
                     {
-                        CLIInterface.logError("HTTP Error: " + statusResult.StatusCode.ToString());
-                        throw new NetworkUtilsException("Unsuccessful");
+                        throw new NetworkUtilsException("Unable to publish: HTTP Error: " + statusResult.StatusCode.ToString());
                     }
                 }
+            }
+            catch (NetworkUtilsException ex)
+            {
+                throw ex;
             }
             catch (System.Exception)
             {
