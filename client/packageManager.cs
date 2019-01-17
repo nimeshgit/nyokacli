@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 // @TODO add default output for empty table
 // @TODO tell user when to two dashes for --deps.
 // @TODO prevent circular dependencies on server side
+// @TODO add version number for nyoka
 namespace PackageManagerNS
 {
     public static class PackageManager
