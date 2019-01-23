@@ -1,8 +1,6 @@
-﻿using CommandLine;
-using FSOpsNS;
+﻿using FSOpsNS;
 using System.Collections.Generic;
 using PackageManagerNS;
-using CommandLine.Text;
 using Constants;
 using CLIInterfaceNS;
 using System.Linq;

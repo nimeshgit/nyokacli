@@ -1,33 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace InfoTransferContainers
 {
-    internal static class Splitter
-    {
-        public static List<string> trimThenHandlEmptyString(string str, char splitCh)
-        {
-            if (str.Trim().Length == 0) return new List<string>();
+    // internal static class Splitter
+    // {
+    //     public static List<string> trimThenHandlEmptyString(string str, char splitCh)
+    //     {
+    //         if (str.Trim().Length == 0) return new List<string>();
             
-            // trim then split
-            return str.Trim().Split(splitCh).ToList();
-        }
-    }
+    //         // trim then split
+    //         return str.Trim().Split(splitCh).ToList();
+    //     }
+    // }
     public class AvailableResourcesInfoContainer
     {
         
         public class AvailableResourceDescription
         {
-            public static AvailableResourceDescription deserialize(string str)
-            {
-                List<string> splitBySemicolon = Splitter.trimThenHandlEmptyString(str, ';');
-                return new AvailableResourceDescription(
-                    long.Parse(splitBySemicolon[0]),
-                    splitBySemicolon[1]
-                );
-            }
-            
             public long byteCount;
             public string versionStr;
 
@@ -36,27 +28,10 @@ namespace InfoTransferContainers
                 this.byteCount = byteCount;
                 this.versionStr = versionStr;
             }
-
-            public string serialize()
-            {
-                return $"{byteCount.ToString()};{versionStr}";
-            }
         }
         public static AvailableResourcesInfoContainer deserialize(string str)
         {
-            List<string> keyValueStrings = Splitter.trimThenHandlEmptyString(str, ',');
-
-            var resourceDescriptions = new Dictionary<string, AvailableResourceDescription>();
-            
-            foreach (string keyValueStr in keyValueStrings)
-            {
-                string key = keyValueStr.Split(':')[0];
-                string resourceDescriptionStr = keyValueStr.Split(':')[1];
-
-                resourceDescriptions[key] = AvailableResourceDescription.deserialize(resourceDescriptionStr);
-            }
-            
-            return new AvailableResourcesInfoContainer(resourceDescriptions);
+            return JsonConvert.DeserializeObject<AvailableResourcesInfoContainer>(str);
         }
 
         public Dictionary<string, AvailableResourceDescription> resourceDescriptions;
@@ -72,14 +47,7 @@ namespace InfoTransferContainers
 
         public string serialize()
         {
-            List<string> keyValueStrings = new List<string>();
-
-            foreach (var (key, resourceDescription) in resourceDescriptions.Select(x => (x.Key, x.Value)))
-            {
-                keyValueStrings.Add($"{key}:{resourceDescription.serialize()}");
-            }
-
-            return string.Join(",", keyValueStrings);
+            return JsonConvert.SerializeObject(this);
         }
     }
 
@@ -87,40 +55,16 @@ namespace InfoTransferContainers
     {
         public class ResourceVersionDescription
         {
-            public static ResourceVersionDescription deserialize(string str)
-            {
-                return new ResourceVersionDescription(long.Parse(str.Trim()));
-            }
             public long byteCount;
             public ResourceVersionDescription(long byteCount)
             {
                 this.byteCount = byteCount;
             }
-
-            public string serialize()
-            {
-                return this.byteCount.ToString();
-            }
         }
+        
         public static ResourceVersionsInfoContainer deserialize(string str)
         {
-            string latestVersion = str.Trim().Split(';')[0];
-            string versionDictString = str.Trim().Split(';')[1];
-
-            List<string> versionDictEntryStrings = Splitter.trimThenHandlEmptyString(versionDictString, ',');
-            var versions = new Dictionary<string, ResourceVersionDescription>();
-
-            foreach (string dictEntryStr in versionDictEntryStrings)
-            {
-                string versionStr = dictEntryStr.Split(':')[0];
-                string serializedVersionDescription = dictEntryStr.Split(':')[1];
-
-                ResourceVersionDescription versionDescription = ResourceVersionDescription.deserialize(serializedVersionDescription);
-                
-                versions[versionStr] = versionDescription;
-            }
-
-            return new ResourceVersionsInfoContainer(versions, latestVersion);
+            return JsonConvert.DeserializeObject<ResourceVersionsInfoContainer>(str);
         }
 
         public Dictionary<string, ResourceVersionDescription> versions;
@@ -135,17 +79,7 @@ namespace InfoTransferContainers
 
         public string serialize()
         {
-            List<string> versionDictEntryStrings = new List<string>();
-
-            foreach (var (versionName, versionDescription) in versions.Select(x => (x.Key, x.Value)))
-            {
-                string entryString = $"{versionName}:{versionDescription.serialize()}";
-                versionDictEntryStrings.Add(entryString);
-            }
-            string versionDictString = string.Join(",", versionDictEntryStrings);
-
-            return $"{latestVersion};{versionDictString}";
-            // return $"{latestVersion};{string.Join(",", versions)}";
+            return JsonConvert.SerializeObject(this);
         }
     }
 
@@ -153,15 +87,6 @@ namespace InfoTransferContainers
     {
         public class DependencyDescription
         {
-            public static DependencyDescription deserialize(string str)
-            {
-                string[] split = str.Trim().Split('-');
-                string versionStr = split[0];
-                bool isDirectDependency = bool.Parse(split[1]);
-                long byteCount = long.Parse(split[2]);
-
-                return new DependencyDescription(versionStr, isDirectDependency, byteCount);
-            }
             public bool isDirectDependency;
             public string versionStr;
             public long byteCount;
@@ -172,39 +97,11 @@ namespace InfoTransferContainers
                 this.isDirectDependency = isDirectDependency;
                 this.byteCount = byteCount;
             }
-
-            public string serialize()
-            {
-                return $"{versionStr}-{isDirectDependency.ToString()}-{byteCount.ToString()}";
-            }
         }
 
         public static ResourceDependencyInfoContainer deserialize(string str)
         {
-            List<string> depDictsStrings = Splitter.trimThenHandlEmptyString(str, ';');
-
-            var depDicts = new List<Dictionary<string, DependencyDescription>>();
-
-            foreach (string depDictStr in depDictsStrings)
-            {
-                var depDict = new Dictionary<string, DependencyDescription>();
-
-                foreach (string keyValStrPair in Splitter.trimThenHandlEmptyString(depDictStr, ','))
-                {
-                    string key = keyValStrPair.Split(':')[0];
-                    string depDescriptionStr = keyValStrPair.Split(':')[1];
-
-                    depDict[key] = DependencyDescription.deserialize(depDescriptionStr);
-                }
-
-                depDicts.Add(depDict);
-            }
-
-            var codeDeps = depDicts[0];
-            var dataDeps = depDicts[1];
-            var modelDeps = depDicts[2];
-
-            return new ResourceDependencyInfoContainer(codeDeps, dataDeps, modelDeps);
+            return JsonConvert.DeserializeObject<ResourceDependencyInfoContainer>(str);
         }
 
         public Dictionary<string, DependencyDescription> codeDeps;
@@ -230,24 +127,7 @@ namespace InfoTransferContainers
 
         public string serialize()
         {
-            Dictionary<string, DependencyDescription>[] depDicts = {codeDeps, dataDeps, modelDeps};
-
-            List<string> serializedDicts = new List<string>();
-            
-            foreach (var depDict in depDicts)
-            {
-                List<string> dictEntries = new List<string>();
-                foreach (var (depName, depDescription) in depDict.Select(x => (x.Key, x.Value)))
-                {
-                    dictEntries.Add($"{depName}:{depDescription.serialize()}");
-                }
-                string serializedDict = string.Join(",", dictEntries);
-                serializedDicts.Add(serializedDict);
-            }
-
-            string serializedInfoContainer = string.Join(";", serializedDicts);
-
-            return serializedInfoContainer;
+            return JsonConvert.SerializeObject(this);
         }
     }
 
@@ -255,20 +135,11 @@ namespace InfoTransferContainers
     {
         public class PublishDepDescription
         {
-            public static PublishDepDescription deserialize(string str)
-            {
-                return new PublishDepDescription(str.Trim());
-            }
             public string version;
 
             public PublishDepDescription(string version)
             {
                 this.version = version;
-            }
-
-            public string serialize()
-            {
-                return $"{version}";
             }
         }
 
@@ -278,31 +149,7 @@ namespace InfoTransferContainers
 
         public static PublishDepsInfoContainer deserialize(string str)
         {
-            List<string> depDictStrings = Splitter.trimThenHandlEmptyString(str, ';');
-
-            var depDicts = new List<Dictionary<string, PublishDepDescription>>();
-
-            foreach (string depDictString in depDictStrings)
-            {
-                var depDict = new Dictionary<string, PublishDepDescription>();
-                List<string> depKeyValuePairStrings = Splitter.trimThenHandlEmptyString(depDictString, ',');
-
-                foreach (string depKVPairStr in depKeyValuePairStrings)
-                {
-                    string key = depKVPairStr.Split(':')[0];
-                    string depDescriptionStr = depKVPairStr.Split(':')[1];
-
-                    depDict[key] = PublishDepDescription.deserialize(depDescriptionStr);
-                }
-
-                depDicts.Add(depDict);
-            }
-
-            var codeDeps = depDicts[0];
-            var dataDeps = depDicts[1];
-            var modelDeps = depDicts[2];
-
-            return new PublishDepsInfoContainer(codeDeps, dataDeps, modelDeps);
+            return JsonConvert.DeserializeObject<PublishDepsInfoContainer>(str);
         }
 
         public PublishDepsInfoContainer()
@@ -324,25 +171,7 @@ namespace InfoTransferContainers
 
         public string serialize()
         {
-            Dictionary<string, PublishDepDescription>[] depDicts = {codeDeps, dataDeps, modelDeps};
-            List<string> serializedDepDicts = new List<string>();
-
-            foreach (Dictionary<string, PublishDepDescription> depDict in depDicts)
-            {
-                List<string> depDictKeyValueStrings = new List<string>();
-
-                foreach (var (depName, depDescription) in depDict.Select(x => (x.Key, x.Value)))
-                {
-                    string keyValuePairStr = $"{depName}:{depDescription.serialize()}";
-                    depDictKeyValueStrings.Add(keyValuePairStr);
-                }
-
-                string dictSerializedStr = string.Join(",", depDictKeyValueStrings);
-                serializedDepDicts.Add(dictSerializedStr);
-            }
-
-            string depInfoContainerInfoString = string.Join(";", serializedDepDicts);
-            return depInfoContainerInfoString;
+            return JsonConvert.SerializeObject(this);
         }
     }
 }
