@@ -14,14 +14,19 @@ namespace RepositoryServer
     {
         public static void Main(string[] args)
         {
+            Console.WriteLine("Creating host...");
             var host = WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
                 .UseKestrel(options => {
                     options.Limits.MaxRequestBodySize = 10000000000L;
                 })
                 .Build();
-            
+
+            Console.WriteLine("Host created, starting host");
+
             host.Run();
+
+            Console.WriteLine("Host started");
         }
     }
 }
