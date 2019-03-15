@@ -11,9 +11,9 @@ namespace FileTypeInferenceNS
             }
         }
 
-        public static readonly string[] codeFileExtensions = {"py", "ipynb"};
+        public static readonly string[] codeFileExtensions = {"py", "ipynb", "r", "jar"};
         public static readonly string[] modelFileExtensions = {"pmml"};
-        public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip"};
+        public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip","txt","md"};
 
         private static string getLowerCaseFileExtension(string fileName)
         {
@@ -36,10 +36,12 @@ namespace FileTypeInferenceNS
         public static bool isCodeFileName(string fileName)
         {
             string extension = getLowerCaseFileExtension(fileName);
-            switch(getLowerCaseFileExtension(fileName))
+            switch(extension)
             {
             case "py":
             case "ipynb":
+            case "r":
+            case "jar":
                 return true;
             default:
                 return false;
@@ -49,7 +51,7 @@ namespace FileTypeInferenceNS
         public static bool isModelFileName(string fileName)
         {
             string extension = getLowerCaseFileExtension(fileName);
-            switch(getLowerCaseFileExtension(fileName))
+            switch(extension)
             {
             case "pmml":
                 return true;
@@ -61,7 +63,7 @@ namespace FileTypeInferenceNS
         public static bool isDataFileName(string fileName)
         {
             string extension = getLowerCaseFileExtension(fileName);
-            switch(getLowerCaseFileExtension(fileName))
+            switch(extension)
             {
             case "json":
             case "csv":
@@ -69,6 +71,8 @@ namespace FileTypeInferenceNS
             case "jpg":
             case "jpeg":
             case "zip":
+            case "txt":
+            case "md":
                 return true;
             default:
                 return false;

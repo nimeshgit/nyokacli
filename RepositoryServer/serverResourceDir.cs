@@ -14,6 +14,7 @@ namespace ServerResourceDirNS
         private static string getMimeType(FileInfo fileInfo)
         {
             string extension = fileInfo.Name.Substring(fileInfo.Name.LastIndexOf(".") + 1);
+            extension = extension.ToLower();
 
             switch (extension) {
             case "py":    return "application/x-python-code";
@@ -21,7 +22,12 @@ namespace ServerResourceDirNS
             case "csv":   return "text/csv";
             case "json":  return "application/json";
             case "png":   return "image/png";
-            case "jpg":
+            case "txt":   return "text/txt";
+            case "md" :   return "text/md";
+            case "r" :    return "application/r";
+            case "jar" :  return "application/jar";
+            case "zip" :  return "application/zip";
+            case "jpg":   return "";
             case "jpeg":  return "image/jpeg";
             case "pmml":  return "application/xml";
             default: throw new System.ArgumentException();

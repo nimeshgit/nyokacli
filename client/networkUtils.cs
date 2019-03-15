@@ -17,11 +17,11 @@ namespace NetworkUtilsNS
             }
         }
 
-        private static string baseServerUrl()
+        private static string baseServerUrl(string prefix)
         {
             if (FSOps.remoteServerConfigFileExists())
             {
-                return FSOps.unsafeGetRemoteServerConfigString();
+                return FSOps.unsafeGetRemoteServerConfigString(prefix);
             }
             else
             {
@@ -29,8 +29,8 @@ namespace NetworkUtilsNS
             }
         }
 
-        private static string getApiUrl => $"{baseServerUrl()}/api/getresources";
-        private static string postApiUrl => $"{baseServerUrl()}/api/postresources";
+        private static string getApiUrl(string prefix) => $"{baseServerUrl(prefix)}/api/getresources";
+        private static string postApiUrl(string prefix) => $"{baseServerUrl(prefix)}/api/postresources";
 
         private static string resourceUrlSection(ResourceType resourceType)
         {
@@ -40,34 +40,35 @@ namespace NetworkUtilsNS
             throw new NetworkUtilsException("Could not form request to server");
         }
 
-        private static string resourceFileUrl(ResourceType resourceType, string resourceName, string version)
+        private static string resourceFileUrl(string prefix,ResourceType resourceType, string resourceName, string version)
         {
-            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/file";
+            return $"{getApiUrl(prefix)}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/file";
         }
 
-        private static string resourceVersionsUrl(ResourceType resourceType, string resourceName)
+        private static string resourceVersionsUrl(string prefix,ResourceType resourceType, string resourceName)
         {
-            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions";
+            return $"{getApiUrl(prefix)}/{resourceUrlSection(resourceType)}/{resourceName}/versions";
         }
 
-        private static string resourceDependenciesUrl(ResourceType resourceType, string resourceName, string version)
+        private static string resourceDependenciesUrl(string prefix,ResourceType resourceType, string resourceName, string version)
         {
-            return $"{getApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/dependencies";
+            return $"{getApiUrl(prefix)}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/dependencies";
         }
 
-        private static string availableResourcesUrl(ResourceType resourceType)
+        private static string availableResourcesUrl(string prefix, ResourceType resourceType)
         {
-            return $"{getApiUrl}/{resourceUrlSection(resourceType)}";
+            return $"{getApiUrl(prefix)}/{resourceUrlSection(resourceType)}";
         }
 
-        private static string resourcePostUrl(ResourceType resourceType, string resourceName, string version)
+        private static string resourcePostUrl(string prefix,ResourceType resourceType, string resourceName, string version)
         {
-            return $"{postApiUrl}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/post";
+            return $"{postApiUrl(prefix)}/{resourceUrlSection(resourceType)}/{resourceName}/versions/{version}/post";
         }
 
         private static readonly System.Net.Http.HttpClient client = new System.Net.Http.HttpClient();
 
         public static async System.Threading.Tasks.Task downloadResource(
+            string prefix,
             ResourceType resourceType,
             string resourceName,
             string version,
@@ -77,7 +78,7 @@ namespace NetworkUtilsNS
             
             try
             {
-                totalFileSize = getResourceVersions(resourceType, resourceName).versions[version].byteCount;
+                totalFileSize = getResourceVersions(prefix,resourceType, resourceName).versions[version].byteCount;
             }
             catch (System.Exception)
             {
@@ -88,7 +89,7 @@ namespace NetworkUtilsNS
 
             int bufferSize = System.Math.Max(1, System.Math.Min((int)(totalFileSize/100.0), 10000000));
             
-            string url = resourceFileUrl(resourceType, resourceName, version);
+            string url = resourceFileUrl(prefix,resourceType, resourceName, version);
 
             try
             {
@@ -130,9 +131,9 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static ResourceVersionsInfoContainer getResourceVersions(ResourceType resourceType, string resourceName)
+        public static ResourceVersionsInfoContainer getResourceVersions(string prefix,ResourceType resourceType, string resourceName)
         {
-            string url = resourceVersionsUrl(resourceType, resourceName);
+            string url = resourceVersionsUrl(prefix,resourceType, resourceName);
 
             string serializedInfo;
             try
@@ -161,9 +162,9 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static ResourceDependencyInfoContainer getResourceDependencies(ResourceType resourceType, string resourceName, string version)
+        public static ResourceDependencyInfoContainer getResourceDependencies(string prefix,ResourceType resourceType, string resourceName, string version)
         {
-            string url = resourceDependenciesUrl(resourceType, resourceName, version);
+            string url = resourceDependenciesUrl(prefix, resourceType, resourceName, version);
 
             string serializedInfo;
 
@@ -187,9 +188,9 @@ namespace NetworkUtilsNS
             }
         }
 
-        public static AvailableResourcesInfoContainer getAvailableResources(ResourceType resourceType)
+        public static AvailableResourcesInfoContainer getAvailableResources(string prefix, ResourceType resourceType)
         {
-            string url = availableResourcesUrl(resourceType);
+            string url = availableResourcesUrl(prefix , resourceType);
 
             string serialized;
             try
@@ -212,6 +213,7 @@ namespace NetworkUtilsNS
         }
 
         public static void publishResource(
+            string prefix,
             System.IO.FileStream fileStream,
             ResourceType resourceType,
             string resourceName,
@@ -222,7 +224,7 @@ namespace NetworkUtilsNS
 
             queryString["deps"] = publishDepsInfo.serialize();
 
-            string url = resourcePostUrl(resourceType, resourceName, version) + "?" + queryString.ToString();
+            string url = resourcePostUrl(prefix,resourceType, resourceName, version) + "?" + queryString.ToString();
 
             try
             {

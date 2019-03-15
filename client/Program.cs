@@ -21,22 +21,22 @@ namespace nyoka
                     PackageManager.listResources(opts.resourceType);
                 })
                 .withAdd(opts => {
-                    PackageManager.addPackage(opts.resourceIdentifier);
+                    PackageManager.addPackage(opts.prefix,opts.resourceIdentifier);
                 })
                 .withRemove(opts => {
                     PackageManager.removePackage(opts.resourceIdentifier);
                 })
                 .withAvailable(opts => {
-                    PackageManager.listAvailableResources(opts.resourceType);
+                    PackageManager.listAvailableResources(opts.prefix,opts.resourceType);
                 })
                 .withDependencies(opts => {
-                    PackageManager.listDependencies(opts.resourceIdentifier);
+                    PackageManager.listDependencies(opts.prefix,opts.resourceIdentifier);
                 })
                 .withPublish(opts => {
-                    PackageManager.publishResource(opts.resourceIdentifier, opts.deps);
+                    PackageManager.publishResource(opts.prefix,opts.resourceIdentifier, opts.deps);
                 })
                 .withRemote(opts => {
-                    PackageManager.setRemoteServerAddress(opts.webAddress);
+                    PackageManager.setRemoteServerAddress(opts.prefix,opts.webAddress);
                 });
 
             // To return console color to normal if necessary and to add some space at the bottom of the output

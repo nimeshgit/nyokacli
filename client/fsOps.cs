@@ -3,6 +3,8 @@ using System.Linq;
 using System.IO;
 using Constants;
 using CLIInterfaceNS;
+using NyokaRemoteNS;
+using Newtonsoft.Json;
 
 namespace FSOpsNS
 {
@@ -17,7 +19,7 @@ namespace FSOpsNS
 
         public static char dirSeparatorChar => Path.DirectorySeparatorChar;
 
-        private static readonly string remoteServerConfigFileName = ".nyokaremote";
+        private static readonly string remoteServerConfigFileName = "nyokaremote.json";
         private static readonly string codeDirName = "Code";
         private static readonly string dataDirName = "Data";
         private static readonly string modelDirName = "Models";
@@ -39,14 +41,54 @@ namespace FSOpsNS
             return File.Exists(remoteServerConfigFileName);
         }
 
-        public static string unsafeGetRemoteServerConfigString()
+        public static string unsafeGetRemoteServerConfigString(string prefix)
         {
-            return File.ReadAllText(remoteServerConfigFileName).Trim();
+            NyokaRemote nyremote = JsonConvert.DeserializeObject<NyokaRemote>(File.ReadAllText(remoteServerConfigFileName));
+            if (prefix=="-s" || prefix=="--zementisserver")
+            {
+                return nyremote.ZementisServer;
+            }
+            else if (prefix=="-m" || prefix=="--zementismodeler")
+            {
+                return nyremote.ZementisModeler;
+            }
+            else
+            {
+                return nyremote.RepositoryServer;
+            }
         }
 
-        public static void createOrOverwriteRemoteServerConfigString(string serverAddress)
+        public static void createOrOverwriteRemoteServerConfigString(string prefix , string serverAddress)
         {
-            File.WriteAllText(remoteServerConfigFileName, serverAddress);
+            NyokaRemote nyokaRemote;
+            // First Scenario
+            if (!remoteServerConfigFileExists())
+            {
+                nyokaRemote = new NyokaRemote
+                {
+                RepositoryServer = null,
+                ZementisServer = null,
+                ZementisModeler = null                
+                };                
+            }
+            else
+            {
+                nyokaRemote = JsonConvert.DeserializeObject<NyokaRemote>(File.ReadAllText(remoteServerConfigFileName));
+            }
+            if (prefix == "-s" || prefix == "--zementisserver")
+            {
+                nyokaRemote.ZementisServer = serverAddress; 
+            }
+            else if(prefix == "-m" || prefix =="--zementismodeler")
+            {
+                nyokaRemote.ZementisModeler = serverAddress;
+            }
+            else 
+            {
+                nyokaRemote.RepositoryServer = serverAddress;
+            }         
+            string nyremo = JsonConvert.SerializeObject(nyokaRemote,Formatting.Indented);
+            File.WriteAllText(remoteServerConfigFileName,nyremo);
         }
         
         public static bool hasNecessaryDirs()
@@ -263,4 +305,5 @@ namespace FSOpsNS
             }
         }
     }
+   
 }

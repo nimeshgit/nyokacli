@@ -150,20 +150,28 @@ namespace CLIParserNS
             "Set remote server address for this directory"
         );
 
+        public string prefix; 
         public string webAddress;
 
         public RemoteOptions(List<string> actionArgs, out bool successful)
         {
-            if (actionArgs.Count != 1)
+            if (actionArgs.Count == 1)
+            {               
+                prefix=null;
+                webAddress= actionArgs[0];                  
+            }
+            else if(actionArgs.Count == 2)
             {
-                CLIInterface.logError($"{description.name} action takes no argument, web address. Usage:");
+                prefix = actionArgs[0];
+                webAddress = actionArgs[1];
+            }
+            else             
+            {
+                CLIInterface.logError($"{description.name} action takes one or two argument, alias and web address, where alias is optional argument Usage:");
                 logUsage();
                 successful = false;
                 return;
-            }
-
-            webAddress = actionArgs[0];
-
+            }         
             successful = true;
         }
 
@@ -175,8 +183,16 @@ namespace CLIParserNS
             };
 
             table.addRow(
-                $"{ConstStrings.APPLICATION_ALIAS} {description.name} \"http://serveraddress.com/nyokaapi\"",
-                $"Set the {ConstStrings.APPLICATION_ALIAS} remote server address for this directory to http://serveraddress.com/nyokaapi"
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} \"http://serveraddress.com\"",
+                $"Set the {ConstStrings.APPLICATION_ALIAS} remote server address for the repository server with this directory to http://serveraddress.com/nyokaapi"
+            );
+            table.addRow(
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} -m \"http://serveraddress.com\"",
+                $"Set the {ConstStrings.APPLICATION_ALIAS} remote server address for zementismodeler http://serveraddress.com/nyokaapi"
+            );
+            table.addRow(
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} -s \"http://serveraddress.com\"",
+                $"Set the {ConstStrings.APPLICATION_ALIAS} remote server address for zementisserver http://serveraddress.com/nyokaapi"
             );
 
             CLIInterface.logTable(table, visibleLines: false);
@@ -223,22 +239,31 @@ namespace CLIParserNS
     {
         public static OptionDescription description = new OptionDescription(
             "add",
-            "Download and add a resource to local files."
+            "Download and add a resource file from repository server to local files/zementis server/zementis modeler."
         );
-
+        public string prefix;
         public PackageManager.ResourceIdentifier resourceIdentifier;
 
         public AddOptions(List<string> actionArgs, out bool successful)
         {
-            if (actionArgs.Count != 1)
+            string resourceStr;
+            if (!(actionArgs.Count == 1 || actionArgs.Count ==2))
             {
-                CLIInterface.logError($"{description.name} action takes one argument: resource name. Usage:");
+                CLIInterface.logError($"{description.name} action takes two arguments: alias(optional) ,resource name. Usage:");
                 logUsage();
                 successful = false;
                 return;
             }
-
-            string resourceStr = actionArgs[0];
+            else if (actionArgs.Count==1)
+            {
+                prefix = null;
+                resourceStr = actionArgs[0];
+            }
+            else
+            {
+                prefix = actionArgs[0];
+                resourceStr = actionArgs[1];
+            }
             try
             {
                 resourceIdentifier = ParseUtils.generateResourceIdentifier(resourceStr);
@@ -387,10 +412,11 @@ namespace CLIParserNS
     {
         public static OptionDescription description = new OptionDescription(
             "available",
-            "List available resources."
+            "List available resources from the repository server."
         );
 
         public ResourceType? resourceType;
+        public string prefix;
 
         public AvailableOptions(List<string> actionArgs, out bool successful)
         {
@@ -401,11 +427,10 @@ namespace CLIParserNS
                 successful = false;
                 return;
             }
-            
+            prefix = null;
             if (actionArgs.Count == 1)
             {
-                string resourceTypeStr = actionArgs[0];
-                
+                string resourceTypeStr = actionArgs[1];   
                 try
                 {
                     resourceType = ParseUtils.parseResourceType(resourceTypeStr);
@@ -417,6 +442,7 @@ namespace CLIParserNS
                     return;
                 }
             }
+            
 
             successful = true;
             return;
@@ -431,7 +457,7 @@ namespace CLIParserNS
 
             table.addRow(
                 $"{ConstStrings.APPLICATION_ALIAS} {description.name} model",
-                "Lists all model resources available on server"
+                "Lists all model resources available on repository server"
             );
 
             table.addRow(
@@ -449,7 +475,7 @@ namespace CLIParserNS
             "dependencies",
             "List dependencies of resource."
         );
-
+        public string prefix;
         public PackageManager.ResourceIdentifier resourceIdentifier;
 
         public DependenciesOptions(List<string> actionArgs, out bool successful)
@@ -501,7 +527,7 @@ namespace CLIParserNS
             "publish",
             "Publish a resource in local files to the server."
         );
-
+        public string prefix;
         public PackageManager.ResourceIdentifier resourceIdentifier;
         public List<PackageManager.ResourceIdentifier> deps = new List<PackageManager.ResourceIdentifier>();
 
@@ -514,7 +540,7 @@ namespace CLIParserNS
                 successful = false;
                 return;
             }
-
+            prefix = "-r";
             string resourceStr = actionArgs[0];
             try
             {
@@ -527,7 +553,7 @@ namespace CLIParserNS
                 return;
             }
 
-            if (actionArgs.Count >= 2)
+            if (actionArgs.Count >=2)
             {
                 string shouldBeDepsOption = actionArgs[1];
                 if (shouldBeDepsOption != "--deps")
@@ -557,7 +583,6 @@ namespace CLIParserNS
 
             successful = true;
         }
-
         private void logUsage()
         {
             CLIInterface.PrintTable table = new CLIInterface.PrintTable {
@@ -584,6 +609,64 @@ namespace CLIParserNS
         }
     }
 
+    public class DeployOptions
+    {
+        public static OptionDescription description = new OptionDescription(
+            "deploy",
+            "deploy a resource in local files to the zementisserver or zementismodeler."
+        );
+
+        public string prefix;
+        public PackageManager.ResourceIdentifier resourceIdentifier;
+        public List<PackageManager.ResourceIdentifier> deps = new List<PackageManager.ResourceIdentifier>();
+
+        public DeployOptions(List<string> actionArgs, out bool successful)
+        {
+            if (actionArgs.Count<1)
+            {
+                CLIInterface.logError($"{description.name} action takes two required argument, server alias -r or -m and modelName.pmml file Usage:");
+                logUsage();
+                successful = false;
+                return ;
+            }
+            prefix = actionArgs[0];
+            string resourceStr = actionArgs[1];
+            try
+            {
+                resourceIdentifier = ParseUtils.generateResourceIdentifier(resourceStr);
+            }
+            catch(ParseUtils.ArgumentProcessException ex)
+            {
+                CLIInterface.logError($"Error:{ex.Message}");
+                successful = false;
+                return;
+            }
+            successful = true;
+            
+        }
+        private void logUsage()
+        {
+            CLIInterface.PrintTable table = new CLIInterface.PrintTable{
+                {"Example Action", 0},
+                {"Explanation",0},
+            };
+
+            table.addRow(
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} -m modelName.pmml",
+                "Deploy local model resource called modelNamme.pmml to zementismodeler"               
+            );
+            table.addRow(
+                $"{ConstStrings.APPLICATION_ALIAS} {description.name} -s modelName.pmml",
+                "Deploy local model resource called modelNamme.pmml to zementisserver"               
+            );
+
+            CLIInterface.logTable(table,visibleLines:false);
+        }
+
+
+    }
+
+
     public class OptionDescription
     {
         public readonly string name;
@@ -609,6 +692,8 @@ namespace CLIParserNS
 
         private RemoteOptions parsedRemoteOptions = null;
 
+        private DeployOptions parsedDeployOptions = null;
+
         private static Dictionary<string, OptionDescription> optionDescriptions = new Dictionary<string, OptionDescription> {
             { InitOptions.description.name, InitOptions.description },
             { AddOptions.description.name, AddOptions.description },
@@ -618,6 +703,7 @@ namespace CLIParserNS
             { DependenciesOptions.description.name, DependenciesOptions.description },
             { PublishOptions.description.name, PublishOptions.description },
             { RemoteOptions.description.name, RemoteOptions.description },
+            {DeployOptions.description.name, DeployOptions.description},
         };
         
         public CLIParser(List<string> args)
@@ -683,6 +769,11 @@ namespace CLIParserNS
                 var opts = new PublishOptions(actionArgs, out optionParseSuccessful);
                 
                 if (optionParseSuccessful) parsedPublishOptions = opts;
+            }
+            if (actionName == DeployOptions.description.name)
+            {
+                var opts = new DeployOptions(actionArgs, out optionParseSuccessful);
+                if (optionParseSuccessful) parsedDeployOptions = opts;
             }
             if (actionName == RemoteOptions.description.name)
             {
@@ -759,6 +850,13 @@ namespace CLIParserNS
         {
             if (parsedPublishOptions != null) callFunc(parsedPublishOptions);
 
+            return this;
+        }
+
+        public CLIParser withDeploy(System.Action<DeployOptions> callFunc)
+        {
+            if (parsedDeployOptions != null) callFunc(parsedDeployOptions);
+            
             return this;
         }
 

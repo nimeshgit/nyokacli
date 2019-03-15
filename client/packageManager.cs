@@ -84,9 +84,9 @@ namespace PackageManagerNS
             return $"{numToString} {suffix}";
         }
 
-        public static void setRemoteServerAddress(string serverAddress)
+        public static void setRemoteServerAddress(string prefix , string serverAddress)
         {
-            FSOps.createOrOverwriteRemoteServerConfigString(serverAddress);
+            FSOps.createOrOverwriteRemoteServerConfigString(prefix,serverAddress);
         }
 
         public static void initDirectories()
@@ -101,12 +101,12 @@ namespace PackageManagerNS
             }
         }
 
-        private static void downloadPackage(ResourceType resourceType, string resourceName, string version)
+        private static void downloadPackage(string prefix,ResourceType resourceType, string resourceName, string version)
         {
             try
             {
                 // check that resource is on server
-                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                var availableResources = NetworkUtils.getAvailableResources(prefix,resourceType);
                 if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"Could not find {resourceType.ToString()} resource with name {resourceName} on server");
@@ -114,7 +114,7 @@ namespace PackageManagerNS
                 }
 
                 // check that resource on server has specified version
-                var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                var versionInfo = NetworkUtils.getResourceVersions(prefix,resourceType, resourceName);
                 if (!versionInfo.versions.ContainsKey(version))
                 {
                     CLIInterface.logError(
@@ -126,7 +126,7 @@ namespace PackageManagerNS
                 using (FileStream resourceFileStream = FSOps.createResourceFile(resourceType, resourceName))
                 using (StreamWriter versionFileStream = FSOps.createOrOverwriteResourceVersionFile(resourceType, resourceName))
                 {
-                    Task resourceFileTask = NetworkUtils.downloadResource(resourceType, resourceName, version, resourceFileStream);
+                    Task resourceFileTask = NetworkUtils.downloadResource(prefix,resourceType, resourceName, version, resourceFileStream);
                     
                     Task resourceVersionTask = Task.Factory.StartNew(() => {
                         versionFileStream.WriteLine(version);
@@ -146,7 +146,7 @@ namespace PackageManagerNS
             }
         }
 
-        public static void addPackage(ResourceIdentifier resourceDescription)
+        public static void addPackage(string prefix,ResourceIdentifier resourceDescription)
         {
             try
             {
@@ -154,7 +154,7 @@ namespace PackageManagerNS
                 string resourceName = resourceDescription.resourceName;
 
                 // check if the resource is available from the server
-                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                var availableResources = NetworkUtils.getAvailableResources(prefix,resourceType);
                 if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"No resource called {resourceName} is available from the server.");
@@ -162,7 +162,7 @@ namespace PackageManagerNS
                 }
 
                 string version = resourceDescription.version; // possible null
-                var serverVersionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                var serverVersionInfo = NetworkUtils.getResourceVersions(prefix,resourceType, resourceName);
 
                 if (version == null)
                 {
@@ -217,7 +217,7 @@ namespace PackageManagerNS
                     }
                 }
 
-                ResourceDependencyInfoContainer dependencies = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
+                ResourceDependencyInfoContainer dependencies = NetworkUtils.getResourceDependencies(prefix,resourceType, resourceName, version);
 
                 var depDescriptions = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>> {
                     { ResourceType.Code, dependencies.codeDeps },
@@ -312,11 +312,11 @@ namespace PackageManagerNS
 
                     foreach (var (depResourceType, depName, depVersion) in depsToDownload)
                     {
-                        downloadPackage(depResourceType, depName, depVersion);
+                        downloadPackage(prefix,depResourceType, depName, depVersion);
                     }
                 }
 
-                downloadPackage(resourceType, resourceName, version);
+                downloadPackage(prefix,resourceType, resourceName, version);
             }
             catch (FSOps.FSOpsException ex)
             {
@@ -432,7 +432,7 @@ namespace PackageManagerNS
             }
         }
 
-        public static void listDependencies(ResourceIdentifier resourceDescription)
+        public static void listDependencies(string prefix,ResourceIdentifier resourceDescription)
         {
             string resourceName = resourceDescription.resourceName;
             ResourceType resourceType = resourceDescription.resourceType;
@@ -441,7 +441,7 @@ namespace PackageManagerNS
             try
             {
                 // check if this resource exists on server
-                var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                var availableResources = NetworkUtils.getAvailableResources(prefix,resourceType);
                 if (!availableResources.resourceDescriptions.ContainsKey(resourceName))
                 {
                     CLIInterface.logError($"{resourceType.ToString()} resource {resourceName} could not be found on server");
@@ -459,14 +459,14 @@ namespace PackageManagerNS
                     }
                     else
                     {
-                        var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                        var versionInfo = NetworkUtils.getResourceVersions(prefix,resourceType, resourceName);
                         version = versionInfo.latestVersion;
                     }
                 }
                 // check if user-specified version exists on the server at the given version
                 else
                 {
-                    var versionInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    var versionInfo = NetworkUtils.getResourceVersions(prefix,resourceType, resourceName);
                     if (!versionInfo.versions.ContainsKey(version))
                     {
                         CLIInterface.logError("Server does not report having a version \"{version}\" available for {resourceName}");
@@ -475,7 +475,7 @@ namespace PackageManagerNS
 
                 CLIInterface.logLine($"Showing dependencies of {resourceName}, version {version}");
 
-                ResourceDependencyInfoContainer deps = NetworkUtils.getResourceDependencies(resourceType, resourceName, version);
+                ResourceDependencyInfoContainer deps = NetworkUtils.getResourceDependencies(prefix,resourceType, resourceName, version);
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
                     {"Resource Type", 13},
@@ -486,9 +486,9 @@ namespace PackageManagerNS
                 };
 
                 var availableResourcesInfo = new Dictionary<ResourceType, AvailableResourcesInfoContainer> {
-                    { ResourceType.Code, NetworkUtils.getAvailableResources(ResourceType.Code) },
-                    { ResourceType.Data, NetworkUtils.getAvailableResources(ResourceType.Data) },
-                    { ResourceType.Model, NetworkUtils.getAvailableResources(ResourceType.Model) },
+                    { ResourceType.Code, NetworkUtils.getAvailableResources(prefix, ResourceType.Code) },
+                    { ResourceType.Data, NetworkUtils.getAvailableResources(prefix, ResourceType.Data) },
+                    { ResourceType.Model, NetworkUtils.getAvailableResources(prefix, ResourceType.Model) },
                 };
 
                 var showDepDict = new Dictionary<ResourceType, Dictionary<string, ResourceDependencyInfoContainer.DependencyDescription>>() {
@@ -523,7 +523,7 @@ namespace PackageManagerNS
             }
         }
 
-        public static void listAvailableResources(ResourceType? listType)
+        public static void listAvailableResources(string prefix,ResourceType? listType)
         {
             try
             {
@@ -541,7 +541,7 @@ namespace PackageManagerNS
 
                 foreach (ResourceType resourceType in resourcesToList)
                 {
-                    var availableResources = NetworkUtils.getAvailableResources(resourceType);
+                    var availableResources = NetworkUtils.getAvailableResources(prefix,resourceType);
 
                     foreach (string resourceName in availableResources.resourceDescriptions.Keys.OrderBy(k => k))
                     {
@@ -585,7 +585,7 @@ namespace PackageManagerNS
             }
         }
 
-        public static void publishResource(ResourceIdentifier resourceDescription, IEnumerable<ResourceIdentifier> deps)
+        public static void publishResource(string prefix,ResourceIdentifier resourceDescription, IEnumerable<ResourceIdentifier> deps)
         {
             try
             {
@@ -642,12 +642,12 @@ namespace PackageManagerNS
                     return;
                 }
 
-                var resourcesOnServer = NetworkUtils.getAvailableResources(resourceType);
+                var resourcesOnServer = NetworkUtils.getAvailableResources(prefix,resourceType);
 
                 // If this resource already exists on server
                 if (resourcesOnServer.resourceDescriptions.ContainsKey(resourceName))
                 {
-                    ResourceVersionsInfoContainer serverVersionsInfo = NetworkUtils.getResourceVersions(resourceType, resourceName);
+                    ResourceVersionsInfoContainer serverVersionsInfo = NetworkUtils.getResourceVersions(prefix,resourceType, resourceName);
 
                     // If this resource exists with the same version on server
                     if (serverVersionsInfo.versions.ContainsKey(publishVersion))
@@ -674,6 +674,7 @@ namespace PackageManagerNS
 
                 CLIInterface.logLine("Uploading file.");
                 NetworkUtils.publishResource(
+                    prefix,
                     fileStream,
                     resourceType,
                     resourceName,

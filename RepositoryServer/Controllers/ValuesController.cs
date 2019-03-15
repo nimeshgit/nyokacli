@@ -33,7 +33,7 @@ namespace RepositoryServer.Controllers
             if (resourceType == "models") return serverDir.getModelServerInfoDict().serialize();
             throw new FileNotFoundException();
         }
-
+        
         [HttpGet("getresources/{resourceType}/{resourceName}/versions")]
         public ActionResult<string> GetResourceVersions(string resourceType, string resourceName)
         {
