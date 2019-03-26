@@ -5,6 +5,13 @@
     <ProjectReference Include="..\..\JsonPit\JsonPit.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="HDitem.Persist" Version="1.0.0" />
+    <PackageReference Include="JsonPit" Version="1.0.0" />
+    <PackageReference Include="OsLibCore" Version="1.0.0" />
+    <PackageReference Include="RaiUtilsCore" Version="1.0.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>

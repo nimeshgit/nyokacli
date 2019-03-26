@@ -1,5 +1,9 @@
 {
   "RepositoryServer": "https://dlexp.zmod.org",
   "ZementisServer": "https://zserver.zmod.org",
-  "ZementisModeler": "https://demo1.zmod.org"
+  "ZementisModeler": "https://demo1.zmod.org",
+  "Name": null,
+  "Modified": "0001-01-01T00:00:00+00:00",
+  "Deleted": false,
+  "Note": null
 }

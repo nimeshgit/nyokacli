@@ -3,7 +3,7 @@ using System.Linq;
 using System.IO;
 using Constants;
 using CLIInterfaceNS;
-using NyokaRemoteNS;
+using NyokaServerConfiguration;
 using Newtonsoft.Json;
 
 namespace FSOpsNS
@@ -43,7 +43,7 @@ namespace FSOpsNS
 
         public static string unsafeGetRemoteServerConfigString(string prefix)
         {
-            NyokaRemote nyremote = JsonConvert.DeserializeObject<NyokaRemote>(File.ReadAllText(remoteServerConfigFileName));
+            NyokaRemoteInfo nyremote = JsonConvert.DeserializeObject<NyokaRemoteInfo>(File.ReadAllText(remoteServerConfigFileName));
             if (prefix=="-s" || prefix=="--zementisserver")
             {
                 return nyremote.ZementisServer;
@@ -60,11 +60,11 @@ namespace FSOpsNS
 
         public static void createOrOverwriteRemoteServerConfigString(string prefix , string serverAddress)
         {
-            NyokaRemote nyokaRemote;
+            NyokaRemoteInfo nyokaRemote;
             // First Scenario
             if (!remoteServerConfigFileExists())
             {
-                nyokaRemote = new NyokaRemote
+                nyokaRemote = new NyokaRemoteInfo
                 {
                 RepositoryServer = null,
                 ZementisServer = null,
@@ -73,7 +73,7 @@ namespace FSOpsNS
             }
             else
             {
-                nyokaRemote = JsonConvert.DeserializeObject<NyokaRemote>(File.ReadAllText(remoteServerConfigFileName));
+                nyokaRemote = JsonConvert.DeserializeObject<NyokaRemoteInfo>(File.ReadAllText(remoteServerConfigFileName));
             }
             if (prefix == "-s" || prefix == "--zementisserver")
             {
