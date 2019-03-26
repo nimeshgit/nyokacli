@@ -26,7 +26,7 @@ Create ZMODServerFiles directory in home directory (~/ZMODServerFiles), with the
 
 * Windows:
 
-	##### Note: You'll probably need Visual Studio (community edition is OK), with C++ tools installed, to run this.
+	##### Note: You'll probably need Visual Studio (community edition is OK) with C++ tools installed to run this.
         dotnet publish -r win-x64 -c release
 
 ## After building, to alias nyoka on mac or linux:
