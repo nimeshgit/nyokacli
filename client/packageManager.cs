@@ -233,9 +233,9 @@ namespace PackageManagerNS
                     CLIInterface.PrintTable table = new CLIInterface.PrintTable {
                         {"Resource Type", 13},
                         {"Dependency Type", 15},
-                        {"Name of Resource", 15},
-                        {"Resource Version", 15},
-                        {"File Size", 10},
+                        {"Name of Resource", 16},
+                        {"Resource Version", 16},
+                        {"File Size", 9},
                     };
 
                     foreach (var (depResourceType, deps) in depDescriptions.Select(x => (x.Key, x.Value)))
@@ -389,10 +389,10 @@ namespace PackageManagerNS
                 }
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
-                    {"Type", 7},
-                    {"Name of Resource", 20},
-                    {"Version", 15},
-                    {"File Size", 10},
+                    {ConstStrings.HeaderStringType, 8},
+                    {ConstStrings.HeaderStringNameOfResource, 21},
+                    {ConstStrings.HeaderStringVersion, 16},
+                    {ConstStrings.HeaderStringFileSize, 11},
                 };
 
                 List<ResourceType> resourcesToList = listType.HasValue ?
@@ -416,10 +416,10 @@ namespace PackageManagerNS
                         long fileSize = FSOps.getResourceSize(resourceType, resourceName);
 
                         table.addRow(
-                            resourceType.ToString(),
-                            resourceName,
-                            version,
-                            bytesToString(fileSize)
+                            doFormat(resourceType.ToString()),
+                            doFormat(resourceName),
+                            doFormat(version),
+                            doFormat(bytesToString(fileSize))
                         );
                     }
                 }
@@ -532,11 +532,11 @@ namespace PackageManagerNS
                     new List<ResourceType> { ResourceType.Code, ResourceType.Data, ResourceType.Model };
 
                 CLIInterface.PrintTable printTable = new CLIInterface.PrintTable {
-                    {"Type", 7},
-                    {"Name of Resource", 20},
-                    {"Latest Version", 15},
-                    {"Local Version", 1},
-                    {"File Size", 10},
+                    {ConstStrings.HeaderStringFileSize, 8},
+                    {ConstStrings.HeaderStringNameOfResource, 21},
+                    {ConstStrings.HeaderStringLatestVersion, 16},
+                    {ConstStrings.HeaderStringLocalVersion, 2},
+                    {ConstStrings.HeaderStringFileSize, 11},
                 };
 
                 foreach (ResourceType resourceType in resourcesToList)
@@ -564,11 +564,11 @@ namespace PackageManagerNS
                         }
 
                         printTable.addRow(
-                            resourceType.ToString(),
-                            resourceName,
-                            availableResources.resourceDescriptions[resourceName].versionStr,
-                            localVersionStr,
-                            bytesToString(availableResources.resourceDescriptions[resourceName].byteCount)
+                            doFormat(resourceType.ToString()),
+                            doFormat(resourceName),
+                            doFormat(availableResources.resourceDescriptions[resourceName].versionStr),
+                            doFormat(localVersionStr),
+                            doFormat(bytesToString(availableResources.resourceDescriptions[resourceName].byteCount))
                         );
                     }
                 }
@@ -697,5 +697,11 @@ namespace PackageManagerNS
                 CLIInterface.logError($"Network Error: {ex.Message}");
             }
         }
+
+        private static string doFormat(string input)
+        {
+            return ' ' + input + ' ';
+        }
     }
+    
 }
