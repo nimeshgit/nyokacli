@@ -389,7 +389,7 @@ namespace PackageManagerNS
                 }
 
                 CLIInterface.PrintTable table = new CLIInterface.PrintTable {
-                    {ConstStrings.HeaderStringType, 8},
+                    {ConstStrings.HeaderStringType, 6},
                     {ConstStrings.HeaderStringNameOfResource, 21},
                     {ConstStrings.HeaderStringVersion, 16},
                     {ConstStrings.HeaderStringFileSize, 11},
@@ -532,7 +532,7 @@ namespace PackageManagerNS
                     new List<ResourceType> { ResourceType.Code, ResourceType.Data, ResourceType.Model };
 
                 CLIInterface.PrintTable printTable = new CLIInterface.PrintTable {
-                    {ConstStrings.HeaderStringFileSize, 8},
+                    {ConstStrings.HeaderStringType, 6},
                     {ConstStrings.HeaderStringNameOfResource, 21},
                     {ConstStrings.HeaderStringLatestVersion, 16},
                     {ConstStrings.HeaderStringLocalVersion, 2},
