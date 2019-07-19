@@ -11,9 +11,9 @@ namespace FileTypeInferenceNS
             }
         }
 
-        public static readonly string[] codeFileExtensions = {"py", "ipynb", "r", "jar"};
-        public static readonly string[] modelFileExtensions = {"pmml"};
-        public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip","txt","md"};
+        public static readonly string[] codeFileExtensions = {"py", "ipynb", "r", "jar", "mon"};
+        public static readonly string[] modelFileExtensions = {"pmml", "h5", "pb", "pbtxt", "onnx"};
+        public static readonly string[] dataFileExtensions = {"json", "csv", "png", "jpg", "jpeg", "zip","txt","md", "webp"};
 
         private static string getLowerCaseFileExtension(string fileName)
         {
@@ -42,6 +42,7 @@ namespace FileTypeInferenceNS
             case "ipynb":
             case "r":
             case "jar":
+            case "mon":
                 return true;
             default:
                 return false;
@@ -54,6 +55,10 @@ namespace FileTypeInferenceNS
             switch(extension)
             {
             case "pmml":
+            case "h5":
+            case "pb":
+            case "pbtxt":
+            case "onnx" :
                 return true;
             default:
                 return false;
@@ -73,6 +78,7 @@ namespace FileTypeInferenceNS
             case "zip":
             case "txt":
             case "md":
+            case "webp":
                 return true;
             default:
                 return false;
